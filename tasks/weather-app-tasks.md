@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Versão | 0.4 (rascunho ordenado por dependências) |
+| Versão | 0.5 (rascunho com tarefas de teste explícitas) |
 | Entrada | [Plano técnico](../plans/weather-app-plan.md), versão 0.1, incluindo P4.8 |
 | Fonte normativa | [Spec](../specs/weather-app-spec.md), versão 0.2 |
 | Status | Proposta; implementação bloqueada até concluir T-01 |
@@ -91,19 +91,19 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-03 | Preparar fixtures unitárias | Registrar respostas controladas da spec. | JSONs parseáveis; São Paulo com 25 °C/código 2/leitura 09:45 e datas 29/10–02/11/2026/min/max/códigos idênticos à spec 4.1; Tóquio e variantes de erro/ausência derivadas explicitamente nos testes; nenhuma fixture apresentada como dado real (spec 4.0–4.1). | T-02 | `tests/fixtures/geocoding.json`, `tests/fixtures/forecast.json` | Test |
-| T-37 | Testar conversão | Validar casos numéricos e imutabilidade. | Todos os casos de AC-4.2, AC-4.6, AC-4.7 aprovados passam; inclui ida/volta, ausência e zero negativo. | T-03, T-04 | `tests/unit/temperature.test.ts` | Test |
+| T-37 | Testar conversão de unidade com Vitest | Validar funções puras com testes tabulares, sem React ou rede. | 25 °C → 77 °F, 0 °C → 32 °F, −40 °C → −40 °F e tabela de AC-4.6 passam; inclui arredondamento aprovado, ausência, zero negativo e ida/volta com Celsius original intacto (AC-4.2, AC-4.6, AC-4.7). | T-03, T-04 | `tests/unit/temperature.test.ts` | Test |
 | T-38 | Testar formatação temporal | Fixar relógio e fusos distantes. | Tóquio, Hoje e virada aprovada mantêm datas/leitura corretas e pt-BR (AC-2.2, AC-3.2–3.4; EC-16). | T-03, T-05 | `tests/unit/format.test.ts` | Test |
 | T-51 | Testar catálogo WMO | Percorrer todos os códigos e fallback. | 28 códigos testados individualmente e código 999 neutro, com textos da fixture preservados (AC-2.3, AC-3.7; spec 4.1). | T-03, T-06 | `tests/unit/weatherCodes.test.ts` | Test |
 | T-52 | Testar serviço de geocoding | Mockar `fetch`, não o alvo do teste. | URL codificada, idioma, opcionais, caracteres e vazio verificados sem API real (AC-1.1, AC-1.7–1.8, AC-1.13, AC-5.3). | T-03, T-07 | `tests/unit/geocodingService.test.ts` | Test |
-| T-53 | Testar normalização de forecast | Simular arrays incompletos/fora de ordem. | Parâmetros, cinco datas, excedentes, lacunas e atual ausente verificados sem deslocamentos nem zeros fabricados (AC-3.1–3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16). | T-03, T-08 | `tests/unit/forecastService.test.ts` | Test |
-| T-54 | Testar falhas de transporte/API | Simular rejeições, timeout e prazo de 429. | Rede, HTTP 4xx/5xx e JSON ilegível geram erro, não sucesso; aos 9.999 ms chamada ainda ativa e aos 10.000 ms timeout; 429 testa segundos, data HTTP, passado, ausente e inválido; abort por substituição distinto; mocks/timers restaurados (AC-5.4, AC-5.6, AC-5.10, AC-5.13, AC-5.16). | T-03, T-09 | `tests/unit/weatherServiceErrors.test.ts` | Test |
+| T-53 | Testar forecast com mock de fetch | Executar serviço real com `fetch` mockado no Vitest, sem API real. | URL/parâmetros, cinco datas, excedentes, lacunas e atual ausente verificados sem deslocamentos nem zeros fabricados; não mockar o serviço alvo; restaurar `fetch` após cada teste (AC-3.1–3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16). | T-03, T-08 | `tests/unit/forecastService.test.ts` | Test |
+| T-54 | Testar falhas de transporte/API | Mockar `fetch` no Vitest para simular rejeições, timeout e prazo de 429. | Rede, HTTP 4xx/5xx e JSON ilegível geram erro, não sucesso; aos 9.999 ms chamada ainda ativa e aos 10.000 ms timeout; 429 testa segundos, data HTTP, passado, ausente e inválido; abort por substituição distinto; sem API real, mocks/timers restaurados (AC-5.4, AC-5.6, AC-5.10, AC-5.13, AC-5.16). | T-03, T-09 | `tests/unit/weatherServiceErrors.test.ts` | Test |
 | T-55 | Testar busca no hook | Mockar serviço e controlar timers/respostas. | 299/300 ms, termo curto/vazio, limpeza e respostas invertidas produzem estados esperados sem rede (AC-1.4–1.6, AC-1.9, AC-1.12). | T-03, T-10 | `tests/unit/useWeatherSearch.test.tsx` | Test |
 | T-56 | Testar forecast no hook | Controlar seleção e resolução de promises. | Nova cidade vence resposta antiga; loading/success/partial/error e contexto da cidade corretos (AC-1.3, AC-1.11, AC-5.9, AC-5.14). | T-03, T-11 | `tests/unit/useWeatherForecast.test.tsx` | Test |
 | T-57 | Testar retry no hook | Controlar tempo e cliques repetidos. | Uma tentativa ativa, mesma consulta, sem fila/automação; resposta expirada ignorada e prazo 429 respeitado (AC-5.5–5.6, AC-5.11, AC-5.15). | T-03, T-12 | `tests/unit/useWeatherRetry.test.tsx` | Test |
 | T-58 | Testar unidade no hook | Observar estado e chamadas do serviço. | Celsius inicial, unidade ativa durante loading, nenhuma chamada no toggle, dados originais preservados (AC-4.1, AC-4.3, AC-4.5, AC-4.8). | T-03, T-39 | `tests/unit/useWeatherUnit.test.tsx` | Test |
-| T-63 | Testar indicador de loading | Consultar status por papel/nome. | Indicador aparece conforme props sem mover foco nem rede (AC-5.2, AC-5.9). | T-03, T-40 | `tests/unit/LoadingState.test.tsx` | Test |
-| T-64 | Testar estado vazio | Verificar variantes inicial e sem resultados. | Orientação correta, sugestão de grafia e ausência de retry em empty (AC-5.1, AC-5.3). | T-03, T-41 | `tests/unit/EmptyState.test.tsx` | Test |
-| T-65 | Testar estado de erro | Verificar mensagem e callback de retry. | Erro distinto de empty; ação chama callback só quando disponível; detalhes técnicos ausentes (AC-5.4, AC-5.10–5.11). | T-03, T-42 | `tests/unit/ErrorState.test.tsx` | Test |
+| T-63 | Testar componente de loading | Renderizar com Vitest/Testing Library e consultar status por papel/nome. | Indicador acessível aparece conforme props, sem alterar elemento previamente focado nem acessar rede (AC-5.2, AC-5.9). | T-03, T-40 | `tests/unit/LoadingState.test.tsx` | Test |
+| T-64 | Testar componente de estado vazio | Renderizar variantes inicial e sem resultados com Vitest/Testing Library. | Variante inicial orienta busca; empty informa ausência de cidades e sugere revisar grafia; nenhuma delas oferece retry; sem rede (AC-5.1, AC-5.3). | T-03, T-41 | `tests/unit/EmptyState.test.tsx` | Test |
+| T-65 | Testar componente de erro | Verificar mensagem e callback com Vitest/Testing Library e `userEvent`. | Mensagem distinta de empty e sem detalhes técnicos; ação habilitada chama callback uma vez por clique; desabilitada não chama callback por clique/teclado; sem rede (AC-5.4, AC-5.10–5.11). | T-03, T-42 | `tests/unit/ErrorState.test.tsx` | Test |
 | T-59 | Testar busca acessível | Exercitar resultados e navegação. | Rótulos/nomes sem campos vazios, setas/Enter/Esc e callbacks corretos; teste por queries acessíveis (AC-1.1–1.3, AC-1.8, AC-7.1, AC-7.3, AC-7.5). | T-03, T-14 | `tests/unit/SearchBar.test.tsx` | Test |
 | T-60 | Testar clima atual | Verificar dados normais e ausências. | Conteúdo atual, hora no fuso e alternativas textuais; parcial mantém dados válidos (AC-2.1–2.3, AC-5.12, AC-5.14). | T-03, T-15 | `tests/unit/CurrentWeather.test.tsx` | Test |
 | T-61 | Testar cartão diário | Verificar rótulos e condição. | Data, min/max, unidade, ausências e fallback acessíveis (AC-3.3, AC-3.7, AC-5.12). | T-03, T-45 | `tests/unit/ForecastCard.test.tsx` | Test |
@@ -117,7 +117,7 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-18 | Preparar Playwright determinístico | Configurar rotas e ambiente controlado. | Ambos os endpoints interceptados; request não previsto ao provedor falha; relógio/fuso fixos; cenário explícito 360 × 640 além do perfil mobile (spec 4.0, RNF1). | T-03, T-17 | `playwright.config.ts`, `tests/e2e/helpers/routes.ts` | Test |
-| T-19 | Testar fluxo principal E2E | Buscar, selecionar e alternar no navegador. | Homônimas, cidade, clima, cinco dias e unidade corretos; contar requests antes/depois do toggle; reload reinicia Celsius (AC-1.1–1.3, AC-2.1, AC-3.1–3.4, AC-4.1–4.5, AC-4.7). | T-18, T-68 | `tests/e2e/weather.spec.ts` | Test |
+| T-19 | Testar fluxo principal E2E desktop e mobile | Executar busca → seleção → clima atual/previsão → alternância com Playwright nos dois viewports. | Mesmo fluxo passa em desktop 1280 × 800 e mobile 360 × 640 com toque habilitado; homônimas, cidade, clima e cinco dias corretos; no mobile selecionar/trocar unidade por toque e alcançar os cinco dias por rolagem vertical sem overflow horizontal; ambos os endpoints interceptados; contagem de requests não aumenta no toggle; reload reinicia Celsius; relatório identifica resultado em cada viewport (AC-1.1–1.3, AC-2.1, AC-3.1–3.5, AC-4.1–4.5, AC-4.7, AC-8.1). | T-18, T-68 | `tests/e2e/weather.spec.ts` | Test |
 | T-20 | Testar erros e recuperação E2E | Exercitar falhas e parciais no navegador. | Vazio, rede, HTTP, JSON, timeout e 429 distintos; retry recupera consulta correta sem fila/automação; parcial preserva dados e crédito (AC-5.1–5.16, AC-6.1–6.2). | T-18 | `tests/e2e/errors.spec.ts` | Test |
 | T-47 | Testar concorrência E2E | Resolver respostas em ordens controladas. | Busca/cidade antiga nunca substitui a atual; campo limpo não repopula; toggle durante loading usa unidade atual (AC-1.5, AC-1.11–1.12, AC-4.8). | T-18 | `tests/e2e/concurrency.spec.ts` | Test |
 | T-21 | Medir layout e toque | Verificar dimensões no navegador. | Larguras 360/768/1280/1920 sem overflow; 360 × 640 alcança cinco dias verticalmente; 1280 × 800 mostra cinco dias juntos; controles ≥ 44 × 44 px conforme exceção (RNF1; AC-3.5, AC-8.1–8.3). | T-18 | `tests/e2e/responsive.spec.ts` | Test |
@@ -138,6 +138,17 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-26 | Executar matriz de browsers | Verificar plataformas reais aprovadas. | Duas versões estáveis mais recentes de Chrome/Firefox/Safari/Edge, Safari iOS e Chrome Android com resultado por fluxo no build publicado; perfil emulado não comprova browser real (RNF6). | T-49 | `tests/manual/compatibility.md` | Test |
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
 | T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa no mesmo estado/artefato avaliado; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-68, T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
+
+## Tarefas de teste explícitas — P5.5
+
+| Cobertura solicitada | Tarefas dedicadas | Evidência exigida |
+| --- | --- | --- |
+| Conversão de unidade | T-37 | Vitest tabular com valores-limite e dados originais preservados. |
+| Services com mock de `fetch` | T-52, T-53, T-54 | Requisições e normalização/falhas verificadas sem chamar API real. |
+| Componentes loading/erro/vazio | T-63, T-65, T-64 | Testing Library verifica conteúdo acessível, foco e interação de retry por variante. |
+| Fluxo principal E2E incluindo mobile | T-19 | Playwright executa o fluxo completo em desktop e 360 × 640 com toque, com resultado separado por viewport. |
+
+T-18 prepara os ambientes e rotas; T-21 mede layout e toque em várias larguras. Nenhuma delas substitui a execução ponta a ponta mobile exigida em T-19. O gate T-68 inclui os testes unitários acima; T-49 depende de T-19 e só publica após E2E aprovado, incluindo ambos os viewports. AC-1.10 continua sendo o único teste de busca sem acento contra o serviço real, em tarefa separada (T-24).
 
 ## Desdobramento da revisão de granularidade — P5.2
 
