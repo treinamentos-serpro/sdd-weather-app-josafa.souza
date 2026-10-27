@@ -48,7 +48,7 @@ export default function CurrentWeather({ city, current, unit }: CurrentWeatherPr
         {[city.admin1, city.country].filter(Boolean).join(' — ')}
       </p>
       <div className="my-6 flex flex-wrap items-center gap-6">
-        <p className="break-words text-6xl font-semibold tracking-tight sm:text-7xl">
+        <p className="min-w-0 max-w-full break-words text-5xl font-semibold tracking-tight sm:text-7xl">
           {formatTemperature(current?.temperatureC ?? null, unit)}
         </p>
         <span role="img" aria-label={condition.description} className="text-6xl text-sun">

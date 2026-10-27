@@ -10,7 +10,7 @@ export default function UnitToggle({ unit, onChange }: UnitToggleProps) {
     <div
       role="group"
       aria-label="Unidade de temperatura"
-      className="inline-flex gap-1 rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur-md"
+      className="inline-flex shrink-0 self-start gap-1 rounded-xl border border-white/10 bg-white/5 p-1 backdrop-blur-md lg:self-center"
     >
       <button
         type="button"

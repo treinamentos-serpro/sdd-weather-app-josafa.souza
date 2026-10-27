@@ -68,3 +68,33 @@ Não implementa o autocomplete de produção: esta divergência foi aprovada ape
 para a demonstração local P6.7. `App` compõe componentes, mantém unidade e estado
 da demonstração localmente e nunca solicita dados. O seletor mantém os cinco
 estados reproduzíveis, inclusive loading estático.
+
+## Revisão de UI e acessibilidade — P6.8
+
+| Ponto encontrado | Melhoria aplicada | Evidência |
+| --- | --- | --- |
+| Texto branco no botão em hover tinha contraste 3,51:1 | Texto night-900 no hover; normal permanece branco/accent-600 (4,58:1) | Playwright calcula contraste das cores computadas e exige ≥4,5:1 |
+| Sem atalho para contornar header/controles | Link "Pular para o conteúdo", visível ao foco, main focável e nomeado | Teclado no Chromium |
+| Retry removia o próprio botão, deixando foco sem destino útil | Busca/retry direcionam foco ao main após renderização; seletor não rouba foco | Testing Library e Playwright |
+| Resultados/vazio não tinham anúncio dinâmico | Região status persistente para sucesso/vazio; loading usa status, erro usa alert | Queries por role e testes de integração |
+| Texto longo da temperatura indisponível podia pressionar o layout | Limites de largura, quebra de palavra e hero menor no mobile | Testes de componentes; grid/browser de 320px a 1280px |
+| Marca/controle de unidade podiam encolher ou esticar indevidamente | Marca sem shrink e grupo de unidade compacto | Header e controles no navegador |
+
+Roles, labels associados, títulos, `aria-pressed` e botões nativos foram
+preservados. Os controles têm alvos mínimos de 44px e foco visível. O grid
+mantém 2/3/5 colunas; cinco estados foram verificados sem overflow horizontal
+em 320, 360, 768 e 1280px no Chromium, incluindo acesso ao último card por
+rolagem vertical. Estes testes não equivalem a uma certificação WCAG completa.
+
+Validação final: `pnpm lint` passou; `pnpm build` passou;
+`pnpm test` passou (69 testes em 10 arquivos);
+`pnpm exec playwright test tests/e2e/ui.spec.ts --project=chromium --workers=1`
+passou (6 testes).
+O teste E2E bloqueia requests externos, incluindo fontes, para não depender de
+rede nem compartilhar dados com terceiros.
+
+Pendências: validar com leitor de tela real, zoom de 200%/400%, forced-colors,
+fontes definitivas e Safari/iOS real. O projeto mobile/WebKit foi tentado após
+instalar browsers/bibliotecas, mas a sessão fecha durante a automação neste
+ambiente (`WebKitWebView ... automation is not allowed in the context`).
+Não tratar essa execução como aprovada nem remover os testes para ocultar a falha.

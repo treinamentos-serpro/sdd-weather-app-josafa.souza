@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CurrentWeather from './components/CurrentWeather';
 import ForecastList from './components/ForecastList';
 import SearchBar from './components/SearchBar';
@@ -22,17 +22,41 @@ const stateLabels: Record<DemoState, string> = {
 export default function App() {
   const [unit, setUnit] = useState<Unit>('celsius');
   const [status, setStatus] = useState<DemoState>('idle');
+  const mainRef = useRef<HTMLElement>(null);
+  const focusRequested = useRef(false);
+
+  useEffect(() => {
+    if (focusRequested.current) {
+      mainRef.current?.focus();
+      focusRequested.current = false;
+    }
+  });
+
+  function showResult(next: DemoState) {
+    if (next === status) {
+      mainRef.current?.focus();
+      return;
+    }
+    focusRequested.current = true;
+    setStatus(next);
+  }
 
   function searchDemo(city: string) {
     const normalized = city.normalize('NFD').replace(/\p{M}/gu, '').toLocaleLowerCase('pt-BR');
-    setStatus(normalized === 'sao paulo' ? 'success' : 'empty');
+    showResult(normalized === 'sao paulo' ? 'success' : 'empty');
   }
 
   return (
     <div className="min-h-screen bg-night-900 font-sans text-white">
+      <a
+        href="#main-content"
+        className="sr-only z-10 rounded-xl bg-night-800 p-3 text-white focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:outline focus:outline-2 focus:outline-accent-400"
+      >
+        Pular para o conteúdo
+      </a>
       <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <header className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-center">
-          <h1 className="text-2xl font-bold">Weather App</h1>
+          <h1 className="shrink-0 text-2xl font-bold">Weather App</h1>
           <SearchBar onSearch={searchDemo} disabled={status === 'loading'} />
           <UnitToggle unit={unit} onChange={setUnit} />
         </header>
@@ -65,7 +89,20 @@ export default function App() {
             ))}
           </select>
         </aside>
-        <main id="main-content" className="min-w-0 space-y-6">
+        <p role="status" className="sr-only">
+          {status === 'success'
+            ? 'Dados de exemplo de São Paulo exibidos.'
+            : status === 'empty'
+              ? 'Nenhuma cidade encontrada na demonstração.'
+              : ''}
+        </p>
+        <main
+          id="main-content"
+          ref={mainRef}
+          tabIndex={-1}
+          aria-label="Resultado meteorológico"
+          className="min-w-0 space-y-6 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
+        >
           {status === 'idle' && (
             <EmptyState
               title="Busque uma cidade"
@@ -84,7 +121,7 @@ export default function App() {
           {status === 'error' && (
             <ErrorState
               message="Erro simulado: não foi possível carregar os dados."
-              onRetry={() => setStatus('success')}
+              onRetry={() => showResult('success')}
             />
           )}
           {status === 'success' && (

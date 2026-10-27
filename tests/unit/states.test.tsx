@@ -15,6 +15,21 @@ describe('Estados de apresentação', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Buscando cidades');
   });
 
+  it('não rouba foco quando o carregamento é montado', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<button type="button">Controle existente</button>);
+    await user.tab();
+    const control = screen.getByRole('button', { name: 'Controle existente' });
+    expect(control).toHaveFocus();
+    rerender(
+      <>
+        <button type="button">Controle existente</button>
+        <LoadingState />
+      </>,
+    );
+    expect(control).toHaveFocus();
+  });
+
   it('exibe mensagem de erro e permite retry por teclado sem submeter formulário', async () => {
     const user = userEvent.setup();
     const onRetry = vi.fn();
@@ -33,6 +48,8 @@ describe('Estados de apresentação', () => {
     rerender(<ErrorState message="Aguarde antes de tentar." onRetry={onRetry} disabled />);
     await user.click(screen.getByRole('button'));
     expect(screen.getByRole('button')).toBeDisabled();
+    await user.tab();
+    await user.keyboard('{Enter} ');
     expect(onRetry).toHaveBeenCalledTimes(2);
   });
 

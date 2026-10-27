@@ -15,6 +15,8 @@ it('integra fixture, unidade derivada, vazio e nova busca sem rede', async () =>
   expect(screen.getByRole('heading', { name: 'Busque uma cidade' })).toBeInTheDocument();
   const input = screen.getByRole('searchbox');
   await user.type(input, '  sao paulo  {Enter}');
+  expect(screen.getByRole('main')).toHaveFocus();
+  expect(screen.getByRole('status')).toHaveTextContent('Dados de exemplo de São Paulo exibidos.');
   expect(
     within(screen.getByRole('region', { name: 'Clima atual em São Paulo' })).getByText('25 °C'),
   ).toBeInTheDocument();
@@ -25,6 +27,8 @@ it('integra fixture, unidade derivada, vazio e nova busca sem rede', async () =>
   ).toBeInTheDocument();
   await user.clear(input);
   await user.type(input, 'Recife{Enter}');
+  expect(screen.getByRole('main')).toHaveFocus();
+  expect(screen.getByRole('status')).toHaveTextContent('Nenhuma cidade encontrada');
   expect(
     screen.getByRole('heading', { name: 'Nenhuma cidade encontrada na demonstração' }),
   ).toBeInTheDocument();
@@ -41,11 +45,14 @@ it('demonstra todos os estados e retry simulado sem timers ou API', async () => 
   render(<App />);
   const selector = screen.getByRole('combobox', { name: 'Estado de demonstração' });
   await user.selectOptions(selector, 'loading');
-  expect(screen.getByRole('status')).toHaveTextContent('Demonstração de carregamento');
+  expect(within(screen.getByRole('main')).getByRole('status')).toHaveTextContent(
+    'Demonstração de carregamento',
+  );
   expect(screen.getByRole('searchbox')).toBeDisabled();
   await user.selectOptions(selector, 'error');
   expect(screen.getByRole('alert')).toHaveTextContent('Erro simulado');
   await user.click(screen.getByRole('button', { name: 'Tentar novamente' }));
+  expect(screen.getByRole('main')).toHaveFocus();
   expect(
     within(screen.getByRole('region', { name: 'Clima atual em São Paulo' })).getByText('25 °C'),
   ).toBeInTheDocument();
