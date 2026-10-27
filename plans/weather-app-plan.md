@@ -185,6 +185,53 @@ interface WeatherService {
 
 ## Data Flow
 
+### Diagrama de fluxo
+
+Os nós de estado pertencem à mesma instância de `useWeather`; os serviços apenas retornam dados ou falhas, sem importar o hook. Toda resposta passa pela verificação da operação ativa antes de atualizar a UI.
+
+```mermaid
+flowchart TD
+    Input["SearchBar: input de busca"] --> Prepare["useWeather: trim e invalidar busca anterior"]
+    Prepare --> Eligible{"Pelo menos 2 caracteres não brancos?"}
+    Eligible -->|Não| Idle["searchState: idle; sem request"]
+    Eligible -->|Sim| Debounce["useWeather: debounce de 300 ms"]
+    Debounce --> SearchLoading["searchState: loading"]
+    SearchLoading --> Geo["weatherService.searchCities: geocoding"]
+    Geo --> SearchGate{"Resposta pertence à operação ativa?"}
+    SearchGate -->|Não| Ignore["Ignorar resposta obsoleta; não alterar UI"]
+    SearchGate -->|Sim| SearchOutcome{"Resultado da busca"}
+    SearchOutcome -->|Lista com cidades| SearchSuccess["searchState: success"]
+    SearchOutcome -->|Lista vazia válida| Empty["searchState: empty; revisar grafia"]
+    SearchOutcome -->|Rede, HTTP, timeout ou JSON inválido| SearchError["searchState: error; retry manual"]
+    SearchSuccess --> Results["SearchBar: lista de cidades"]
+    Results --> Select["Usuário seleciona cidade explicitamente"]
+    Select --> WeatherLoading["useWeather: cidade selecionada; weatherState: loading"]
+    WeatherLoading --> Forecast["weatherService.getWeather: forecast"]
+    Forecast --> WeatherGate{"Resposta pertence à operação ativa?"}
+    WeatherGate -->|Não| Ignore
+    WeatherGate -->|Sim| WeatherOutcome{"Resultado meteorológico"}
+    WeatherOutcome -->|Dados completos| Success["useWeather: weatherState success"]
+    WeatherOutcome -->|Há dados utilizáveis com ausências| Partial["useWeather: weatherState partial"]
+    WeatherOutcome -->|Falha ou nenhum dado utilizável| WeatherError["useWeather: weatherState error; retry manual"]
+    Success --> UI["CurrentWeather e ForecastList: dados e unidade ativa"]
+    Partial --> UI
+    Idle --> Feedback["App: orientação, loading, vazio ou erro acessível"]
+    SearchLoading --> Feedback
+    WeatherLoading --> Feedback
+    Empty --> Feedback
+    SearchError --> Feedback
+    WeatherError --> Feedback
+    Empty -->|Editar termo| Input
+    SearchError -->|Retry permitido: mesmo termo| SearchLoading
+    WeatherError -->|Retry permitido: mesma cidade| WeatherLoading
+    Toggle["UnitToggle: alterar unit em useWeather"] --> Derive["lib: derivar temperaturas na renderização"]
+    Derive --> UI
+```
+
+Retry só é permitido fora de loading e após `retryAt`, quando houver prazo válido de HTTP 429; liberar o botão não envia request. Timeout termina em error e invalida a tentativa; cancelamento por edição, nova seleção ou desmontagem não gera erro exibível. Campo vazio limpa apenas a busca, preservando a cidade selecionada e seus dados (AC-1.12). A alternância de unidade não tem caminho para os serviços (RF4).
+
+### Sequência detalhada
+
 1. A tela inicia sem requisição e mostra orientação inicial (RF5.1, AC-5.1). Unidade começa em Celsius; nenhum estado é restaurado de armazenamento.
 2. O campo de busca mantém o texto digitado. O hook só agenda geocodificação quando houver ao menos dois caracteres não brancos e 300 ms sem digitação; remove espaços das extremidades antes de enviar (RF1.5, AS-6).
 3. O serviço recebe o termo e um `AbortSignal`, constrói a URL com `URLSearchParams`, trata a resposta HTTP e normaliza resultados. A UI exibe apenas campos disponíveis; usuário seleciona explicitamente uma cidade.
