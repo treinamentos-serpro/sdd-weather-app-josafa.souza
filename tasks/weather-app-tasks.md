@@ -139,6 +139,10 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
 | T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa no mesmo estado/artefato avaliado; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-68, T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
 
+## Delegação preparada — P5.8
+
+O [prompt autocontido de T-01](./t-01-coding-agent-prompt.md) está pronto para a próxima sessão do Coding Agent. T-01 continua sendo **gate documental**, não implementação: o prompt exige evidências de T-36/T-31–T-35 e autorização humana antes de registrar aprovação, e instrui parar sem código quando houver bloqueios. A preparação do prompt não conclui nenhuma tarefa nem autoriza T-02.
+
 ## Estimativa e prioridade — P5.7
 
 ### Escalas e uso
