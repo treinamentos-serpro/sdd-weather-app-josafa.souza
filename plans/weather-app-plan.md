@@ -145,7 +145,7 @@ interface WeatherCondition {
 type SearchState =
   | { status: "idle" }
   | { status: "loading"; query: string }
-  | { status: "results"; query: string; cities: City[] }
+  | { status: "success"; query: string; cities: City[] }
   | { status: "empty"; query: string }
   | { status: "error"; query: string; error: RequestError };
 
@@ -342,23 +342,78 @@ Estado local em `useWeather`, sem store global:
 | Estado | Responsabilidade |
 | --- | --- |
 | `query` | Texto controlado do campo; não confundir com o termo da requisição ativa. |
-| `searchState` | Ciclo de vida da busca: idle, loading, results, empty ou error. |
-| `selectedCity` | Cidade explicitamente selecionada e exibida junto aos dados. |
+| `searchState` | Ciclo de vida da busca: idle, loading, success, empty ou error. |
 | `weatherState` | Ciclo de vida da previsão para a cidade selecionada: idle, loading, success, partial ou error. |
 | `unit` | Celsius ou Fahrenheit, inicializado em Celsius e mantido só na memória da página. |
+
+- `App` chama o hook uma vez. Componentes recebem dados e callbacks; não mantêm cópias de cidade, temperaturas ou unidade. Apenas estado visual, como abertura da lista e item ativo do teclado, permanece local ao componente.
+- `selectedCity` é derivada de `weatherState`: `null` em idle e a cidade da operação nos demais estados. Em success/partial, a cidade de `WeatherData` deve ser a mesma da operação; não pode ser alterada independentemente.
+- Não armazenar booleanos paralelos (`isLoading`, `hasError`, `isEmpty`): derivá-los do discriminante `status`, evitando combinações impossíveis.
+
+### Estados explícitos e transições
+
+| Estado | Busca de cidades | Consulta meteorológica |
+| --- | --- | --- |
+| `idle` | Inicial, campo vazio/curto ou termo aguardando debounce; sem mensagem de falha ou ausência de resultados. | Nenhuma cidade selecionada; orientação inicial, sem requisição. |
+| `loading` | Requisição enviada para o termo atual, com campo editável. | Cidade selecionada em destaque, consulta em andamento; não exibir dados da cidade anterior. |
+| `success` | Resposta válida com uma ou mais cidades; lista aguarda seleção explícita. | Dados completos da cidade selecionada disponíveis. |
+| `empty` | Resposta válida sem cidades; sugerir revisar grafia, sem retry. | Não existe: ausência total de dados meteorológicos é error, não empty. |
+| `partial` | Não existe como estado da busca; resultados inválidos dependem da regra pendente na spec. | Há dados utilizáveis, mas algum campo/dia/seção está indisponível; preservar o restante. |
+| `error` | Rede, HTTP, timeout ou resposta inválida; retry do termo que falhou. | Falha da consulta ou nenhuma seção utilizável; preservar identificação da cidade e oferecer retry. |
+
+| Evento | Transição / efeito |
+| --- | --- |
+| Editar o termo | Invalidar a busca anterior imediatamente, limpar resultados/erro e voltar a idle; agendar nova busca somente se atingir o mínimo. Não alterar a cidade já selecionada nem seus dados (AC-1.5, AC-1.12). |
+| Completar 300 ms sem digitação com termo elegível | idle → loading; enviar uma consulta para o termo trimado (AS-6). |
+| Receber resposta da busca ativa | loading → success, empty ou error, conforme a resposta. |
+| Selecionar resultado atual | Fechar lista; substituir contexto meteorológico e entrar em loading para a nova cidade (AC-1.3, AC-1.11). |
+| Receber resposta meteorológica ativa | loading → success, partial ou error; remover indicador de carregamento. |
+| Acionar retry permitido | error → loading no fluxo correspondente, repetindo seu termo/cidade; nenhuma repetição automática. |
+| Alternar unidade | Alterar somente `unit`; preservar todos os estados de consulta e dados originais. |
+| Receber resposta obsoleta ou cancelar por substituição/desmontagem | Nenhuma transição causada pela resposta antiga; não anunciar erro de cancelamento. |
 
 - Busca e previsão têm estados independentes: digitar uma nova busca não bloqueia o campo nem transforma resultados vazios em falha.
 - Usar `AbortController` para cancelar requisições substituídas/desnecessárias e um identificador monotônico por fluxo para impedir efeitos de respostas tardias, inclusive quando o provedor responder após abort/timeout.
 - Cada fluxo mantém no máximo uma requisição ativa. Desabilitar retry enquanto estiver em andamento; não enfileirar cliques (RF5.8, AC-5.11).
+- Controladores, identificadores e timer de debounce são recursos internos do hook, não estado visual. O serviço controla o timeout de 10 s por chamada. Limpar timers e cancelar operações substituídas ou desmontadas; timeout invalida a tentativa antes de publicar error, impedindo até sua resposta tardia anterior a um retry (AC-5.6).
 - Manter a cidade selecionada explícita enquanto a previsão carrega ou falha. Não apresentar dados da cidade anterior como se fossem da nova cidade (AC-5.9, AC-5.10).
 - Não usar cache, persistência ou tentativa automática. Não adicionar contexto React: não existe compartilhamento de estado entre rotas/componentes que justifique essa camada.
 
+### Conversão derivada na renderização
+
+O serviço sempre solicita Celsius. O hook armazena os valores recebidos sem arredondamento em `temperatureC`, `minC` e `maxC`, além de `unit` separado. Na renderização, cada componente usa as mesmas funções puras de `lib/temperature` e `lib/format`:
+
+1. Se o valor for `null`, renderizar "indisponível"; não convertê-lo para zero.
+2. Em Celsius, usar o valor original; em Fahrenheit, calcular **F = C × 9 / 5 + 32**.
+3. Arredondar apenas o valor de exibição para inteiro, normalizar zero negativo para 0 e anexar `°C` ou `°F`, coerente com a unidade ativa.
+
+Não armazenar uma segunda versão Fahrenheit, não sobrescrever valores Celsius e não usar efeito para sincronizar temperaturas convertidas. Alternar `unit` provoca nova renderização, **sem requisição de geocoding ou forecast**. O serviço e o efeito de consulta não dependem de `unit`. Ao chegar uma resposta durante a alternância, a renderização usa a unidade que estiver ativa naquele instante.
+
+Exemplos verificáveis: 25 °C → 77 °F; −40 °C → −40 °F; ida e volta não alteram dados originais (AC-4.2, AC-4.6–4.8). O desempate exato de valores como 22,5 e −22,5 permanece sujeito a OQ-16; não adotar uma regra silenciosamente.
+
 ## Error Handling
+
+### Classificação na borda do serviço
+
+| Situação | Classificação | Efeito na UI / recuperação |
+| --- | --- | --- |
+| Falha de transporte, inclusive offline | `network` | error com mensagem pt-BR e retry manual; não afirmar que não existem cidades. |
+| HTTP não-2xx | `http` | error no fluxo afetado; não tentar normalizar o corpo como dados de sucesso. |
+| HTTP 429 | `http` com `retryAt` | error; respeitar prazo válido de `Retry-After` antes de habilitar retry, sem disparar consulta ao terminar a espera. |
+| 10 s desde o envio sem conclusão | `timeout` | Cancelar/invalidar a tentativa, terminar loading e oferecer retry; ignorar resposta tardia. |
+| Corpo vazio, JSON ilegível ou estrutura incompatível | `invalid-response` | error explícito; não retornar lista vazia nem objeto de sucesso como fallback. |
+| Forecast válido com campos/dias/seção ausentes | Estado `partial`, não erro total | Preservar dados utilizáveis e sinalizar ausências individualmente; manter as cinco datas. |
+| JSON válido sem nenhuma seção meteorológica utilizável | `no-usable-data` | error com retry; não reutilizar dados de consulta anterior nem preencher temperaturas com zero. |
+| Geocoding válido sem resultados | Estado `empty`, não erro | Orientação para revisar grafia, sem retry e sem consultar forecast. |
+| Cancelamento por nova consulta ou desmontagem | Cancelamento de controle, não `RequestError` | Não apresentar falha nem permitir que a operação cancelada altere o estado atual. |
+
+O serviço rejeita falhas com classificação reconhecível pelo hook; não captura tudo para devolver sucesso. O hook traduz falhas da operação ativa para o estado error; a apresentação escolhe mensagem em pt-BR pelo tipo e fluxo. Não expor `reason`, stack trace ou códigos HTTP como texto final. Não adicionar analytics ou envio de erros a terceiros (RNF7).
 
 - **Loading:** iniciar assim que a requisição é enviada; permitir continuar digitando; terminar ao receber resposta, erro ou timeout de 10 s (AS-7, AC-5.2, AC-5.6, AC-5.9).
 - **Busca vazia:** resposta válida com lista vazia gera estado `empty`, sugestão para revisar a grafia e nenhuma chamada de previsão. Campo vazio ou abaixo do mínimo gera nenhuma requisição e nenhum erro.
 - **Falha:** distinguir erro de rede, timeout, HTTP não-2xx, corpo ilegível e JSON válido sem dados utilizáveis. A UI mostra mensagem em pt-BR e ação manual de retry, nunca detalhes técnicos, código HTTP ou texto de erro do provedor.
 - **HTTP 429:** ler `Retry-After` válido como prazo de retry; manter ação indisponível até o prazo. Se ausente ou inválido, permitir retry manual imediato. Nenhum retry automático (RF5.4, RF5.7, OQ-17).
+- Interpretar `Retry-After` como segundos não negativos ou data HTTP válida e armazenar o prazo em `retryAt` (epoch ms); prazo já passado não exige espera. Derivar disponibilidade de retry do estado da operação e desse prazo; atualizar a UI ao atingir o prazo, sem enviar request. A regra de produto continua pendente em OQ-17.
 - **Retry:** preservar exatamente o termo ou a cidade que falhou; permitir somente uma tentativa ativa; limpar mensagem de erro ao começar a tentativa e mostrar loading. Cancelar/inutilizar respostas de tentativas expiradas ou substituídas.
 - **Resposta parcial:** manter os dados utilizáveis; marcar campos ausentes como indisponíveis e associar cada dia à sua data local. Se nenhuma seção contiver dados utilizáveis, mapear para erro e oferecer retry (RF5.5).
 - **Condição desconhecida:** fallback localizado e ícone neutro, sem converter uma condição desconhecida em falha de dados (AC-2.3, AC-3.7).
