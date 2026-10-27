@@ -26,8 +26,6 @@ bloqueando a integração/API. `formatTemperature` usa o arredondamento inteiro 
 `Intl.NumberFormat('pt-BR')` (empates afastados de zero), apenas na exibição;
 OQ-16 continua pendente de aprovação formal dessa política para a aplicação.
 
-## ForecastList e ForecastCard
-
 ## Estados de apresentação
 
 `LoadingState` anuncia via `role="status"` e aceita `message` opcional.
@@ -40,7 +38,7 @@ P6.6–P6.8 foram autorizados como exceção limitada em 27/10/2026, incluindo
 SearchBar manual, bootstrap, demonstração com mock e testes, sem API nem
 aprovação global da spec/T-01.
 
-## Previsão diária
+## ForecastList e ForecastCard
 
 `ForecastList` recebe `days`, `unit` e `today`; `ForecastCard` recebe `day`, `unit`
 e `today`. `today` deve ser YYYY-MM-DD no fuso da cidade; não use a data do
@@ -60,4 +58,13 @@ indisponível; 0% é válido. A fixture mantém as probabilidades nulas.
 P6.5 autoriza apenas componentes, helper, campo nullable e testes, sem API,
 bootstrap ou aprovação global da spec. O grid usa duas, três ou cinco colunas nos
 breakpoints solicitados. A validação visual em navegador/mobile fica para a
-integração, pois o bootstrap da aplicação ainda não existe.
+integração da demonstração P6.7 e à revisão P6.8.
+
+## SearchBar e App demonstrativo
+
+`SearchBar` recebe `onSearch(city)` e `disabled`, usa formulário `role="search"`
+com label e submit manual (Enter/botão). Não envia termo vazio e aplica trim.
+Não implementa o autocomplete de produção: esta divergência foi aprovada apenas
+para a demonstração local P6.7. `App` compõe componentes, mantém unidade e estado
+da demonstração localmente e nunca solicita dados. O seletor mantém os cinco
+estados reproduzíveis, inclusive loading estático.

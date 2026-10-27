@@ -62,6 +62,22 @@ pnpm install
 pnpm exec playwright install   # navegadores para os testes E2E
 ```
 
+### Demonstração de UI (P6.7)
+
+Execute `pnpm dev` e abra a URL indicada pelo Vite. Esta entrega usa apenas a
+fixture fixa de São Paulo (29/10 a 02/11/2026), sem requests à API. Não representa
+condições reais ou atualizadas.
+
+- A busca é manual: `São Paulo` (ou `sao paulo`) mostra a fixture; outros termos
+  mostram vazio. Espaços nas extremidades são removidos.
+- O seletor **Estado de demonstração** exibe idle/loading/empty/error/success.
+  Loading é estático, sem timer; saia dele pelo seletor. Retry do erro simulado
+  exibe a fixture, não executa uma tentativa de rede.
+- °C/°F é estado local de UI; temperaturas são derivadas dos valores Celsius.
+- A exceção P6.6–P6.8 não aprova a spec nem conclui T-01. Autocomplete, hook,
+  API, tratamento de falhas reais e crédito/licença do provedor ficam para a
+  integração de dados prevista no backlog.
+
 ### Scripts
 
 ```bash

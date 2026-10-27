@@ -1,5 +1,12 @@
 # Weather App — Especificação de Produto
 
+> **Entrega demonstrativa P6.6–P6.8 (27/10/2026):** exceção autorizada pelo usuário
+> para estados de UI, SearchBar manual, App/bootstrap com fixture fixa e revisão
+> acessível/responsiva. O seletor expõe os cinco estados sem API; buscar São Paulo
+> mostra a fixture e outros termos mostram vazio. Retry é simulado e não representa
+> recuperação de rede. Esta entrega não substitui autocomplete nem aprova requisitos
+> pendentes, a spec global ou T-01.
+
 | Campo | Valor |
 | --- | --- |
 | Versão | 0.2 (rascunho para aprovação) |

@@ -10,6 +10,16 @@ Este plano define arquitetura, decisões e contratos de dados, não a implementa
 
 ## Architecture
 
+### Exceção demonstrativa P6.6–P6.8
+
+Autorizada pelo usuário em 27/10/2026, sem aprovar a spec/T-01. Antes da API,
+`App` mantém apenas `unit` e `DemoState` locais, compõe os estados e a fixture fixa,
+com `today="2026-10-29"`. Um seletor explícito reproduz idle/loading/empty/error/success
+sem timers ou requests; a SearchBar manual mostra São Paulo ou vazio, e retry
+do erro simulado mostra a fixture. Isto não implementa autocomplete ou recuperação
+real. `main.tsx`/estilos Tailwind inicializam a demonstração; a arquitetura de
+produção abaixo continua pendente da integração com `useWeather`/services.
+
 Aplicação web client-side, sem backend próprio. A UI React consome uma camada de serviços que encapsula Open-Meteo e converte as respostas externas para o modelo interno. Componentes não conhecem URLs, parâmetros nem o formato bruto do provedor.
 
 ```text
