@@ -122,6 +122,11 @@ interface CurrentWeather {
   temperatureC: number | null;
   weatherCode: number | null;
   observedAt: LocalDateTime | null;
+  relativeHumidityPercent: number | null;
+  windSpeedKmh: number | null;
+  precipitationMm: number | null;
+  precipitationIntervalSeconds: number | null;
+  surfacePressureHpa: number | null;
 }
 
 interface ForecastDay {
@@ -331,14 +336,14 @@ O mínimo de dois caracteres e debounce de 300 ms são regras da aplicação (AS
 | Parâmetro | Valor / uso |
 | --- | --- |
 | `latitude`, `longitude` | Coordenadas da `City` selecionada. |
-| `current` | `temperature_2m,weather_code`: temperatura a 2 m e condição atual. |
+| `current` | `temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,precipitation,surface_pressure`: campos aprovados em P6.4. |
 | `daily` | `temperature_2m_min,temperature_2m_max,weather_code`: mínima, máxima e condição diária. |
 | `timezone` | `city.timezone`, por exemplo `America/Sao_Paulo`; não usar o fuso do dispositivo. |
 | `temperature_unit` | `celsius`; a troca para Fahrenheit acontece na apresentação sem nova requisição (RF4). |
 | `forecast_days` | `5`: hoje e os quatro dias seguintes. |
 | `timeformat` | `iso8601`: datas e horários locais; não adicionar `Z` aos horários retornados. |
 
-Não solicitar `hourly`, sensação térmica, vento ou umidade: não são necessários ao conteúdo mínimo; campos adicionais dependem de OQ-3.
+Não solicitar `hourly` ou sensação térmica. P6.4 aprova as quatro métricas atuais de RF2.3: mapear `relative_humidity_2m` → `relativeHumidityPercent`, `wind_speed_10m` → `windSpeedKmh` (enviar `wind_speed_unit=kmh`), `precipitation` → `precipitationMm` (enviar `precipitation_unit=mm`), `surface_pressure` → `surfacePressureHpa`; `current.interval` → `precipitationIntervalSeconds`. Todos são nullable; precipitação sem intervalo positivo válido é indisponível. Exemplos JSON/URL anteriores são resumidos e devem ser estendidos pelo serviço futuro.
 
 Exemplo de URL:
 
@@ -594,7 +599,7 @@ A spec está explicitamente em rascunho. Antes de aprovar tarefas, resolver ou f
 | --- | --- | --- |
 | RF1.1–RF1.6 | Geocoding, campos opcionais, codificação, seleção explícita, debounce e invalidação imediata de resultados antigos. | Coberto com limites, ordenação e homônimas indistinguíveis pendentes em OQ-13. |
 | RF2.1–RF2.2 | Temperatura/condição/ícone, horário local da leitura e timezone IANA; catálogo WMO agora explícito. | Falta decidir validade temporal da leitura (OQ-18) e fallback para fuso/horário inválido. |
-| RF2.3 | Não solicitar campos extras; não inventar unidades. | Condicional a OQ-3; não há critério definido para campos ainda não aprovados. |
+| RF2.3 | Quatro métricas atuais aprovadas em P6.4, nullable e com unidades explícitas. | AC-2.4; serviço futuro deve solicitar/mapear campos e intervalo. |
 | RF3.1–RF3.5 | Cinco datas locais, hoje rotulado, mínima/máxima/condição, agregação diária e alinhamento por data. | Coberto sob AS-4; confirmar OQ-4/OQ-6 e regras para datas inconsistentes. |
 | RF4.1–RF4.5 | Unidade inicial Celsius, controle visível/acessível, conversão derivada sem request, preservação da cidade e reset ao recarregar. | Coberto; desempate do arredondamento e persistência aguardam OQ-16/OQ-7. |
 | RF5.1–RF5.8 | Estados independentes, erro versus empty, parcial, timeout, anúncios, retry manual sem fila nem repetição automática. | Coberto; texto inicial, definição de dado utilizável e regras finais dependem de OQ-8/OQ-13/OQ-17. |

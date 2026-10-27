@@ -81,7 +81,7 @@ Prioridade segue MoSCoW. Tudo marcado **Must** compõe o MVP.
 
 - RF2.1 Para a cidade selecionada, o sistema exibe as condições atuais com, no mínimo: temperatura atual, descrição textual da condição (pt-BR) e representação visual da condição (ícone).
 - RF2.2 O sistema informa o horário de referência fornecido pelo provedor ("atualizado às HH:mm"), formatado no fuso horário IANA da cidade; não substitui esse horário pela hora do dispositivo.
-- RF2.3 Campos adicionais (sensação térmica, umidade, vento etc.) dependem de **OQ-3**; se adotados, seguem os mesmos critérios de unidade (RF4) e acessibilidade (RNF2).
+- RF2.3 Exibir umidade relativa (%), vento a 10 m (km/h), precipitação no intervalo da leitura (mm, com duração explícita) e pressão local de superfície (hPa). Valores ausentes ficam indisponíveis; sem duração válida, a precipitação também fica indisponível. Alternar °C/°F não altera essas unidades. Inclusão aprovada pelo usuário em P6.4 em 27/10/2026; demais campos exigem nova decisão.
 
 ### RF3 — Exibir previsão de cinco dias (Must)
 
@@ -327,7 +327,15 @@ Histórias: US2, US7, US8.
 - **And** a temperatura e o horário de referência continuam visíveis
 - **And** nenhuma mensagem de falha é exibida
 
-RF2.3 não tem critério próprio: os campos adicionais dependem de OQ-3. Quando forem definidos, cada campo recebe um critério AC-2.x e segue AC-4.2 (unidade) e AC-7.3 (nome acessível).
+#### AC-2.4 — Métricas atuais e intervalo de precipitação
+
+*Cobre: RF2.3*
+
+- **Given** leitura com umidade 72%, vento 12,5 km/h, precipitação 0 mm em 900 segundos e pressão local 925,4 hPa
+- **When** a seção atual é exibida nas duas unidades de temperatura
+- **Then** os quatro valores aparecem com rótulos e unidades, mantendo km/h, mm, %, hPa em ambas as unidades
+- **And** a precipitação é identificada como referente a 15 minutos, não a um dia
+- **And** campos ausentes são "indisponível"; sem duração válida a precipitação não é apresentada como medida completa
 
 ### 4.4 RF3 — Exibir previsão de cinco dias
 
@@ -773,7 +781,7 @@ Cobertura por sub-requisito:
 | RF1.6 | AC-1.12 |
 | RF2.1 | AC-2.1, AC-2.3 |
 | RF2.2 | AC-2.2 |
-| RF2.3 | — (depende de OQ-3) |
+| RF2.3 | AC-2.4 |
 | RF3.1 | AC-3.1, AC-3.2, AC-3.4, AC-3.5 |
 | RF3.2 | AC-3.3, AC-3.7 |
 | RF3.3 | AC-3.2, AC-3.4 |
@@ -799,7 +807,7 @@ Cobertura por requisito e história:
 | RF | User Stories | Critérios |
 | --- | --- | --- |
 | RF1 | US1, US7, US8 | AC-1.1 – AC-1.13, AC-7.1, AC-7.2, AC-7.3, AC-7.5, AC-8.1, AC-8.3, AC-8.4 |
-| RF2 | US2, US7, US8 | AC-2.1 – AC-2.3, AC-7.3, AC-8.1, AC-8.4 |
+| RF2 | US2, US7, US8 | AC-2.1 – AC-2.4, AC-7.3, AC-8.1, AC-8.4 |
 | RF3 | US3, US4, US7, US8 | AC-3.1 – AC-3.7, AC-5.7, AC-7.3, AC-8.1, AC-8.2, AC-8.4 |
 | RF4 | US5, US7, US8 | AC-4.1 – AC-4.8, AC-7.2, AC-7.3, AC-8.3 |
 | RF5 | US6, US7, US8 | AC-5.1 – AC-5.16, AC-7.2, AC-8.3 |
@@ -815,7 +823,7 @@ Cobertura por história:
 | US | Persona | RFs | ACs próprios | ACs compartilhados | RNFs relevantes | OQs pendentes |
 | --- | --- | --- | --- | --- | --- | --- |
 | US1 | P1 | RF1 | AC-1.1 – AC-1.13 | — | RNF4, RNF5, RNF7, RNF9 | OQ-1, OQ-7, OQ-11, OQ-13 |
-| US2 | P2 | RF2 | AC-2.1 – AC-2.3 | AC-5.12, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-3, OQ-6, OQ-11, OQ-18 |
+| US2 | P2 | RF2 | AC-2.1 – AC-2.4 | AC-5.12, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-6, OQ-11, OQ-18 |
 | US3 | P1 | RF3 | AC-3.1, AC-3.2, AC-3.4, AC-3.6 | AC-3.3, AC-5.7, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-4, OQ-6, OQ-11 |
 | US4 | P3 | RF3 | AC-3.3, AC-3.7 | AC-3.1, AC-5.7, AC-5.12, AC-8.2 | RNF1, RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-3, OQ-11 |
 | US5 | P1 | RF4 | AC-4.1 – AC-4.3, AC-4.5 – AC-4.8 | — | RNF7 | OQ-3, OQ-7, OQ-16 |
@@ -824,7 +832,7 @@ Cobertura por história:
 | US8 | P2 | RF1, RF2, RF3, RF4, RF5 | AC-3.5, AC-8.1 – AC-8.4 | — | RNF1, RNF2, RNF5 | OQ-11 |
 | — | — | RF6 | AC-6.1, AC-6.2 | — | RNF9 | OQ-9 |
 
-RF6 não tem história (requisito de licença), mas seus ACs bloqueiam o release. RF2.3 não tem AC até OQ-3 ser respondida.
+RF6 não tem história (requisito de licença), mas seus ACs bloqueiam o release. AC-2.4 pertence a US2; US7/US8 verificam a apresentação acessível/responsiva das métricas.
 
 Cobertura por RNF:
 
@@ -895,7 +903,7 @@ Premissas adotadas para tornar os critérios verificáveis. Cada uma pode ser re
 | --- | --- | --- |
 | AS-1 | A aplicação é **web responsiva** (não PWA instalável nem app nativo). | A3 → OQ-2 |
 | AS-2 | O usuário consulta **uma cidade por vez**; não há lista ou comparação lado a lado. | A4 → OQ-5 |
-| AS-3 | Conteúdo mínimo: clima atual = temperatura + condição + horário; previsão = data + mín + máx + condição. Campos extras dependem de OQ-3. | A5, A6 → OQ-3, OQ-4 |
+| AS-3 | Clima atual inclui temperatura, condição, horário e as quatro métricas aprovadas em RF2.3/P6.4; previsão inclui data, mín, máx e condição. Outros campos exigem decisão. | A5, A6 → OQ-3, OQ-4 |
 | AS-4 | "Hoje" e horários de referência seguem o **fuso horário da cidade consultada**. | A7 → OQ-6 |
 | AS-5 | Apenas temperaturas alternam entre °C/°F; se outras grandezas forem adicionadas (vento, chuva), usam unidades métricas fixas até decisão. | A8 → OQ-3 |
 | AS-6 | A busca dispara a partir de **2 caracteres não brancos**, após **300 ms** sem digitação; espaços nas extremidades são removidos do termo enviado. | A10 → OQ-13 |
@@ -963,7 +971,7 @@ Itens que **não foram decididos** e não devem ser adivinhados. Premissas usada
 | --- | --- | --- | --- | --- | --- |
 | OQ-1 | Qual o objetivo de negócio e a métrica de sucesso da v1? Haverá medição de uso? | A1, A22 | AS-12 (sem telemetria) | Não | Produto |
 | OQ-2 | A entrega é web responsiva, PWA ou app nativo? | A3 | AS-1 (web responsiva) | **Sim** | Produto |
-| OQ-3 | Há necessidade de campos meteorológicos além do mínimo definido em RF2.1 e RF3.2? Se sim, quais e com quais unidades? | A5, A8, pergunta 9 | AS-3, AS-5 (sem campos extras na v1) | Não, salvo inclusão de novos campos | Produto + UX |
+| OQ-3 | Quais campos adicionais serão usados? | A5, A8, pergunta 9 | Resolvida parcialmente pelo usuário em P6.4: umidade relativa %, vento a 10 m km/h, precipitação por intervalo mm/duração e pressão local hPa (RF2.3). Outros campos requerem decisão específica. | Não para os campos aprovados | Produto + UX |
 | OQ-4 | Confirmar que a previsão da v1 é diária e que a previsão horária permanece fora de escopo. | A6 | RF3.4, AC-3.6 | **Sim** | Produto |
 | OQ-5 | O usuário vê uma cidade por vez ou compara várias? | A4 | AS-2 (uma) | Não | Produto |
 | OQ-6 | Confirmar que "Hoje" e o horário da leitura seguem o fuso da cidade, não o fuso do dispositivo. | A7 | AS-4, AC-2.2, AC-3.4 | **Sim** | Produto |

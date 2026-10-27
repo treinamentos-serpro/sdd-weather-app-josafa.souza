@@ -16,6 +16,12 @@ export interface CurrentWeather {
   weatherCode: number | null;
   /** Data e hora locais da leitura, interpretadas no fuso da cidade. */
   observedAt: string | null;
+  relativeHumidityPercent: number | null;
+  windSpeedKmh: number | null;
+  precipitationMm: number | null;
+  /** Duração em segundos do intervalo a que a precipitação se refere. */
+  precipitationIntervalSeconds: number | null;
+  surfacePressureHpa: number | null;
 }
 
 export interface ForecastDay {

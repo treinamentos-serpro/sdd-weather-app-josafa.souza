@@ -9,6 +9,7 @@
 
 ## Regras
 
+- **Exceção autorizada — P6.4:** em 27/10/2026 o usuário aprovou `CurrentWeather`, helpers locais e testes, mais umidade relativa %, vento a 10 m km/h, precipitação mm com intervalo explícito e pressão local hPa em RF2.3/AC-2.4. T-15/T-60 passam a incluir as métricas; T-02 recebe os campos nullable e T-08/T-53 deverão solicitar e validar os campos atuais/intervalo descritos no plano. T-01 permanece pendente; não liberar API ou integração por esta exceção.
 - **Exceção autorizada — P6.1:** o usuário autorizou em 27/10/2026 implementar apenas os cinco tipos de domínio de T-02 e uma fixture local em `src/mocks/weatherData.ts`, antes de T-01. Não aprova a spec, não conclui T-01/T-02 integralmente (uniões de estado/erros continuam pendentes) nem libera UI, API ou demais tarefas. A fixture tipada é sintética, com as cinco datas fixas da spec 4.1; para simular Hoje durante desenvolvimento, fixar o relógio em 29/10/2026 no fuso de São Paulo. Importar `mockWeatherData` de `src/mocks/weatherData.ts` apenas explicitamente no desenvolvimento, nunca como fallback de falha da API.
 - IDs são estáveis: T-01–T-30 preservam uma parte do escopo original; T-31 em diante representam os desdobramentos. Número não indica posição de execução.
 - Cada linha é uma tarefa com título, descrição, critérios de aceite, dependências diretas, arquivos prováveis e tipo. Arquivos relativos à raiz; cada tarefa altera no máximo dois arquivos relevantes.
@@ -258,7 +259,7 @@ Cobertura por **sub-requisito**, para não esconder lacunas sob um RF amplo. "Pr
 | RF1.6 | Invalidar resultados antigos e limpar busca | T-10, T-14, T-17 | T-55, T-59, T-47 | Previsto; não limpar a cidade/dados selecionados. |
 | RF2.1 | Temperatura, descrição pt-BR e ícone atuais | T-08, T-06, T-15, T-17 | T-53, T-51, T-60, T-19 | Previsto, incluindo fallback de condição desconhecida. |
 | RF2.2 | Horário da leitura no fuso IANA da cidade | T-08, T-05, T-15 | T-53, T-38, T-60 | Previsto; fuso/horário inválido e idade máxima dependem de T-31/T-34. |
-| RF2.3 | Campos meteorológicos adicionais, se aprovados | — | — | **Sem tarefa de implementação/teste específica:** conteúdo ainda não definido em OQ-3. T-31 decide e T-36 cria tarefas/ACs se houver inclusão. |
+| RF2.3 | Umidade, vento, precipitação por intervalo e pressão local | T-02, T-08, T-15, T-17 | T-53, T-60, T-19 | Aprovado em P6.4, AC-2.4; somente componente/helpers nesta exceção. |
 | RF3.1 | Exatamente hoje local + quatro dias | T-08, T-05, T-46, T-17 | T-53, T-38, T-62, T-19, T-21 | Previsto; virada de dia depende de T-31. |
 | RF3.2 | Data, mínima, máxima, descrição e ícone por dia | T-08, T-04, T-05, T-06, T-45 | T-53, T-37, T-38, T-51, T-61, T-19 | Previsto, incluindo rótulos e alternativas textuais. |
 | RF3.3 | Primeiro dia identificado como Hoje | T-05, T-45, T-46 | T-38, T-61, T-62, T-19 | Previsto sob AS-4; confirmação em T-31/OQ-6. |
@@ -281,8 +282,7 @@ Cobertura por **sub-requisito**, para não esconder lacunas sob um RF amplo. "Pr
 
 ### Requisitos sem tarefa correspondente
 
-- **RF2.3 é a única lacuna condicional de implementação:** não existem campos extras aprovados nem AC específico na spec. Não tratar T-31/T-36 como código entregue. Se OQ-3 aprovar extras, criar tarefas Data/UI/Test e seus ACs, cobrir unidade/acessibilidade e atualizar esta matriz antes de liberar o escopo.
-- **Os demais 27 sub-requisitos têm tarefas de implementação e verificação previstas.** Isso não elimina as pendências de decisão registradas na tabela nem o bloqueio de T-01.
+- **Os 28 sub-requisitos têm tarefas previstas**, incluindo RF2.3 após aprovação P6.4; T-15/T-60 cobrem UI/testes das novas métricas e T-08/T-53 a futura API. Outros campos requerem nova decisão. Isso não elimina as pendências de decisão nem conclui T-01.
 - RNFs e tarefas de operação/qualidade continuam válidos; esta tabela não os substitui. T-68 e T-30 consolidam evidências, mas não contam como implementação direta dos RFs.
 
 ## Tarefas de teste explícitas — P5.5
