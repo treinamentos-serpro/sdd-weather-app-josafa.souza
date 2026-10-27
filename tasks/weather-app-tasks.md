@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Versão | 0.2 (rascunho granular) |
+| Versão | 0.3 (rascunho com critérios verificáveis) |
 | Entrada | [Plano técnico](../plans/weather-app-plan.md), versão 0.1, incluindo P4.8 |
 | Fonte normativa | [Spec](../specs/weather-app-spec.md), versão 0.2 |
 | Status | Proposta; implementação bloqueada até concluir T-01 |
@@ -17,24 +17,37 @@
 - Critérios são expectativas, não resultados já obtidos. Nenhuma tarefa está concluída por este documento existir.
 - Não presumir respostas às OQs. Se uma decisão mudar a spec/plano, revisar as tarefas afetadas antes de iniciar dependentes. Não implementar backend, cache, analytics, persistência ou novas grandezas fora de escopo.
 
+## Contrato de aceite — P5.3
+
+Estes critérios complementam **cada linha**, sem substituir seu resultado específico:
+
+1. **Rastreabilidade:** registrar IDs RF/RNF/AC indicados na tarefa na evidência correspondente. As decisões da Entrega 0 referenciam OQs e atualizam os ACs afetados; nenhuma OQ é considerada resolvida apenas por ter responsável sugerido.
+2. **Implementação:** demonstrar o comportamento com entrada/ação/saída da spec aprovada, confirmar tipagem/build e executar o checklist aplicável. Registrar comando e resultado; uma tarefa de implementação não fica concluída só porque o arquivo foi criado.
+3. **Test:** executar os casos especificados e registrar comando/ambiente e resultado; assertion deve falhar se a regra for violada. Sem rede real na suíte principal, esperas arbitrárias, mocks que substituam o próprio alvo ou teste ignorado usado como evidência de sucesso.
+4. **Infra/documentação:** evidência deve identificar configuração/decisão efetiva, aprovador quando necessário, data e verificação. Uma proposta, relatório vazio ou descrição de intenção não satisfaz o aceite.
+5. **Falha:** resultado que não atinge limite ou contém defeito impeditivo bloqueia a conclusão. Correção e reexecução precisam de evidência; não diminuir limiar, ocultar erro, fabricar dado ou retirar caso para obter aprovação.
+6. **Pendências:** números e contratos abaixo reproduzem a spec atual. Se T-01 aprovar alteração, atualizar referências e expectativas no backlog antes de executar a tarefa afetada. RF2.3 só gera implementação/teste adicional se OQ-3 aprovar campos extras.
+
+Não estabelecer percentual de cobertura arbitrário: o portão é a evidência para cada AC aprovado, inclusive AC-1.10 de contrato real e AC-8.4 manual. As tarefas Test verificam ACs de várias histórias sem duplicar o teste por dona da história.
+
 ## Entrega 0 — Decisões antes de implementar
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-31 | Fechar escopo e leitura temporal | Obter decisões de Produto sobre o conteúdo e sua validade. | OQ-2–OQ-6, OQ-18 e regra de virada do dia respondidas na spec; campos/unidades, cidade única e refresh estão explícitos, com ACs atualizados. | Nenhuma | `specs/weather-app-spec.md` | Infra |
+| T-31 | Fechar escopo e leitura temporal | Obter decisões de Produto sobre o conteúdo e sua validade. | OQ-2–OQ-6/OQ-18 e virada do dia com resposta e aprovação registradas; campos/unidades, cidade única, idade máxima e ação de refresh expressos em valores/regras testáveis; RF2–RF3/ACs atualizados, sem "a definir" no escopo aprovado. | Nenhuma | `specs/weather-app-spec.md` | Infra |
 | T-32 | Fechar contrato e licença do provedor | Decidir busca, limites e recuperação com responsáveis técnicos/legais. | OQ-9, OQ-13 e OQ-17 respondidas; limite/ordenação da busca, grafia/homônimas, timeout, 429/CORS e obrigações de atribuição definidos; prioridade de RF6 reconciliada com licença. | Nenhuma | `specs/weather-app-spec.md` | Infra |
 | T-33 | Fechar critérios de UX e qualidade | Aprovar textos, tema, acessibilidade, arredondamento e protocolos. | OQ-1, OQ-8, OQ-10, OQ-11, OQ-14–OQ-16 respondidas ou premissas formalmente aceitas; protocolo, metas, browsers e desempate de arredondamento verificáveis. | Nenhuma | `specs/weather-app-spec.md` | Infra |
 | T-34 | Definir validação de respostas | Fechar casos ambíguos de dados inválidos. | Definidos dados utilizáveis, fuso/hora/coordenadas inválidos, geocoding parcialmente inválido, datas duplicadas e mínima maior que máxima; cada regra tem AC verificável, sem descarte silencioso. | T-31, T-32 | `specs/weather-app-spec.md` | Data |
-| T-35 | Fechar privacidade e operação | Aprovar persistência, hospedagem, logs e disponibilidade. | OQ-7/OQ-12 respondidas; retenção de logs e meta mensal definidas; conflito entre gate de aprovação e gate de release resolvido na spec. | Nenhuma | `specs/weather-app-spec.md` | Infra |
+| T-35 | Fechar privacidade e operação | Aprovar persistência, hospedagem, logs e disponibilidade. | OQ-7/OQ-12 respondidas e aprovadas; serviço de hospedagem, dados retidos/prazo, meta mensal e método de medição definidos; conflito aprovação/release resolvido; RNF7–RNF8 atualizados. | Nenhuma | `specs/weather-app-spec.md` | Infra |
 | T-36 | Sincronizar contratos e backlog | Incorporar decisões da spec ao plano e às tarefas. | Plano e backlog refletem todas as decisões T-31–T-35; contratos, fixtures propostas e dependências não contradizem os ACs aprovados. | T-33, T-34, T-35 | `plans/weather-app-plan.md`, `tasks/weather-app-tasks.md` | Infra |
-| T-01 | Aprovar passagem para implementação | Conferir o gate documental, não decidir todos os temas numa tarefa só. | Critério de saída da spec atendido, status aprovado e sem OQ bloqueante para código; evidência de aprovação registrada. | T-36 | `specs/weather-app-spec.md` | Infra |
+| T-01 | Aprovar passagem para implementação | Conferir o gate documental, não decidir todos os temas numa tarefa só. | Todos os itens do critério de saída da spec com evidência, status aprovado por responsável identificado e sem OQ bloqueante para código; RF1–RF6/RNF1–RNF9 e ACs permanecem coerentes com plano/backlog revisados. | T-36 | `specs/weather-app-spec.md` | Infra |
 
 ## Entrega 1 — Tipos e funções puras
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-02 | Definir tipos compartilhados | Declarar domínio, estados discriminados e erros. | `City`, `CurrentWeather`, `ForecastDay`, `WeatherData`, `Unit` e estados seguem contrato aprovado, com `null` para ausência, Celsius interno, sem DTO externo na UI; TypeScript strict passa (RF1–RF5). | T-01 | `src/types/weather.ts` | Data |
-| T-04 | Implementar conversão pura | Derivar a temperatura exibida sem alterar Celsius original. | Fórmula F = C × 9/5 + 32, arredondamento aprovado, ausência e zero negativo tratados; não muta entrada nem faz request (RF4.3; AC-4.2, AC-4.6, AC-4.7). | T-02 | `src/lib/temperature.ts` | Data |
+| T-04 | Implementar conversão pura | Derivar a temperatura exibida sem alterar Celsius original. | 25 → 77 °F, 0 → 32 °F e −40 → −40 °F; 22,4 °C exibe 22 °C/72 °F; −0,4 °C exibe 0 °C/31 °F; empate segue decisão aprovada; `null` indisponível, entrada intacta e nenhuma rede (RF4.3; AC-4.2, AC-4.6, AC-4.7). | T-02 | `src/lib/temperature.ts` | Data |
 | T-05 | Implementar datas e horários locais | Formatar datas e leitura em pt-BR. | Data civil preservada, Hoje e leitura usam fuso da cidade e instante explícito; não depende implicitamente do fuso do dispositivo (RF2.2, RF3.3; AC-2.2, AC-3.2–3.4). | T-02 | `src/lib/format.ts` | Data |
 | T-06 | Implementar catálogo WMO | Retornar descrição e chave de ícone locais. | Todos os 28 códigos do plano mapeados; desconhecido usa descrição indisponível e ícone neutro, sem ocultar dados válidos (RF2.1, RF3.2, RNF9; AC-2.3, AC-3.7). | T-02 | `src/lib/weatherCodes.ts` | Data |
 
@@ -43,11 +56,11 @@
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-07 | Implementar geocoding | Consultar e normalizar cidades com `fetch`. | URL, idioma e limite aprovados; termo trimado/codificado preserva caracteres; opcionais viram `null`; vazio válido distinto de erro (RF1.1–RF1.2; AC-1.1, AC-1.7–1.8, AC-1.13, AC-5.3). | T-02 | `src/services/weatherService.ts` | Data |
-| T-08 | Implementar forecast normalizado | Produzir dados atuais e registros diários por data. | Parâmetros `current`, `daily`, timezone e Celsius corretos; cinco datas consecutivas, lacunas `null`, excedentes excluídos; atual ausente preserva previsão; nenhum dado utilizável é erro (RF2–RF3, RF5.5; AC-3.1–3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16). | T-05, T-07 | `src/services/weatherService.ts` | Data |
+| T-08 | Implementar forecast normalizado | Produzir dados atuais e registros diários por data. | Enviar `current=temperature_2m,weather_code`, daily min/max/condição, timezone da cidade e Celsius; sete dias recebidos resultam em cinco posições hoje + 4; ausência de 30/10 mantém 31/10 na data correta com 30/10 nulo; atual ausente preserva previsão; nenhum dado utilizável é erro (RF2–RF3, RF5.5; AC-3.1–3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16). | T-05, T-07 | `src/services/weatherService.ts` | Data |
 | T-09 | Implementar erros e timeout | Classificar falhas, cancelamento e prazo de retry. | Rede/HTTP/JSON inválido/sem dados têm classificação explícita; timeout após 10 s aprovados; `Retry-After` válido gera prazo, sem retry automático; abort de substituição não vira erro exibível (RF5.4, RF5.7; AC-5.4, AC-5.6, AC-5.10, AC-5.13). | T-08 | `src/services/weatherService.ts` | Data |
-| T-10 | Implementar busca no hook | Coordenar query, debounce e estado da geocodificação. | idle/loading/success/empty/error; mínimo e 300 ms aprovados; edição invalida resultados antigos, limpar termo preserva clima; cleanup cancela recursos (RF1.5–RF1.6; AC-1.4–1.6, AC-1.9, AC-1.12). | T-09 | `src/hooks/useWeather.ts` | Data |
+| T-10 | Implementar busca no hook | Coordenar query, debounce e estado da geocodificação. | idle/loading/success/empty/error; um caractere ou espaços não consultam; digitação contínua até 299 ms não envia, aos 300 ms envia uma busca pelo termo atual; edição invalida resultados antigos; limpar termo preserva clima; desmontagem cancela recursos (RF1.5–RF1.6; AC-1.4–1.6, AC-1.9, AC-1.12). | T-09 | `src/hooks/useWeather.ts` | Data |
 | T-11 | Implementar seleção e estado meteorológico | Coordenar cidade e forecast independente da busca. | Cidade explícita desde loading; `selectedCity` derivada; resposta obsoleta ignorada; success/partial/error distintos, sem dados da cidade anterior (RF1.3–RF1.4, RF5.5; AC-1.3, AC-1.11, AC-5.9, AC-5.14). | T-10 | `src/hooks/useWeather.ts` | Data |
-| T-12 | Implementar retry manual | Repetir só a consulta ativa que falhou. | Mesmo termo/cidade; sem fila nem retry automático; bloqueio durante loading e até `retryAt`; liberar botão não consulta; tentativa expirada não altera estado (RF5.4, RF5.7–RF5.8; AC-5.5–5.6, AC-5.11, AC-5.15). | T-11 | `src/hooks/useWeather.ts` | Data |
+| T-12 | Implementar retry manual | Repetir só a consulta ativa que falhou. | Três acionamentos antes da resposta enviam uma tentativa, com mesmo termo/cidade; nenhuma fila; sem ação do usuário por 10 s após falha não há request; loading e prazo 429 desabilitam retry; liberar botão não consulta; resposta expirada nunca muda estado (RF5.4, RF5.7–RF5.8; AC-5.5–5.6, AC-5.11, AC-5.15). | T-11 | `src/hooks/useWeather.ts` | Data |
 | T-39 | Implementar unidade no hook | Manter apenas a preferência em memória. | Unidade inicial Celsius; toggle só muda `unit`, sem request ou mutação de dados; funciona enquanto forecast carrega; sem persistência (RF4; AC-4.1, AC-4.3, AC-4.5, AC-4.8). | T-12 | `src/hooks/useWeather.ts` | Data |
 
 ## Entrega 3 — Componentes isolados
@@ -70,19 +83,19 @@
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-17 | Conectar hook e componentes | Ligar uma instância do hook ao fluxo completo. | Props/callbacks ligados sem estado duplicado; todas as temperaturas derivadas sem request ao alternar; retry e foco coerentes; crédito em todos os estados; recarregar limpa dados (RF1–RF6; AC-4.2–4.3, AC-4.5, AC-4.7–4.8, AC-5.8, AC-7.2). | T-39, T-13, T-14, T-15, T-46, T-16, T-44 | `src/App.tsx` | UI |
+| T-17 | Conectar hook e componentes | Ligar uma instância do hook ao fluxo completo. | Uma instância do hook; 25 °C e mín/max da fixture mudam às temperaturas °F da spec sem request adicional; resposta durante loading usa unidade atual; Tab segue busca → unidade → retry → crédito omitindo indisponíveis; anúncios não movem foco/repetem; reload limpa cidade e volta Celsius (RF1–RF6; AC-4.2–4.3, AC-4.5, AC-4.7–4.8, AC-5.8, AC-7.2). | T-39, T-13, T-14, T-15, T-46, T-16, T-44 | `src/App.tsx` | UI |
 
 ## Entrega 5 — Testes isolados e de integração
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| T-03 | Preparar fixtures unitárias | Registrar respostas controladas da spec. | São Paulo/Tóquio, ausências e variantes são reproduzíveis; nenhuma fixture afirma ser dado meteorológico real (spec 4.0–4.1). | T-02 | `tests/fixtures/geocoding.json`, `tests/fixtures/forecast.json` | Test |
+| T-03 | Preparar fixtures unitárias | Registrar respostas controladas da spec. | JSONs parseáveis; São Paulo com 25 °C/código 2/leitura 09:45 e datas 29/10–02/11/2026/min/max/códigos idênticos à spec 4.1; Tóquio e variantes de erro/ausência derivadas explicitamente nos testes; nenhuma fixture apresentada como dado real (spec 4.0–4.1). | T-02 | `tests/fixtures/geocoding.json`, `tests/fixtures/forecast.json` | Test |
 | T-37 | Testar conversão | Validar casos numéricos e imutabilidade. | Todos os casos de AC-4.2, AC-4.6, AC-4.7 aprovados passam; inclui ida/volta, ausência e zero negativo. | T-03, T-04 | `tests/unit/temperature.test.ts` | Test |
 | T-38 | Testar formatação temporal | Fixar relógio e fusos distantes. | Tóquio, Hoje e virada aprovada mantêm datas/leitura corretas e pt-BR (AC-2.2, AC-3.2–3.4; EC-16). | T-03, T-05 | `tests/unit/format.test.ts` | Test |
 | T-51 | Testar catálogo WMO | Percorrer todos os códigos e fallback. | 28 códigos testados individualmente e código 999 neutro, com textos da fixture preservados (AC-2.3, AC-3.7; spec 4.1). | T-03, T-06 | `tests/unit/weatherCodes.test.ts` | Test |
 | T-52 | Testar serviço de geocoding | Mockar `fetch`, não o alvo do teste. | URL codificada, idioma, opcionais, caracteres e vazio verificados sem API real (AC-1.1, AC-1.7–1.8, AC-1.13, AC-5.3). | T-03, T-07 | `tests/unit/geocodingService.test.ts` | Test |
 | T-53 | Testar normalização de forecast | Simular arrays incompletos/fora de ordem. | Parâmetros, cinco datas, excedentes, lacunas e atual ausente verificados sem deslocamentos nem zeros fabricados (AC-3.1–3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16). | T-03, T-08 | `tests/unit/forecastService.test.ts` | Test |
-| T-54 | Testar falhas de transporte/API | Simular rejeições, timeout e prazo de 429. | Rede, HTTP, JSON, abort, timeout e formatos de `Retry-After` classificados; mocks/relógio restaurados; sem retry oculto (AC-5.4, AC-5.6, AC-5.10, AC-5.13, AC-5.16). | T-03, T-09 | `tests/unit/weatherServiceErrors.test.ts` | Test |
+| T-54 | Testar falhas de transporte/API | Simular rejeições, timeout e prazo de 429. | Rede, HTTP 4xx/5xx e JSON ilegível geram erro, não sucesso; aos 9.999 ms chamada ainda ativa e aos 10.000 ms timeout; 429 testa segundos, data HTTP, passado, ausente e inválido; abort por substituição distinto; mocks/timers restaurados (AC-5.4, AC-5.6, AC-5.10, AC-5.13, AC-5.16). | T-03, T-09 | `tests/unit/weatherServiceErrors.test.ts` | Test |
 | T-55 | Testar busca no hook | Mockar serviço e controlar timers/respostas. | 299/300 ms, termo curto/vazio, limpeza e respostas invertidas produzem estados esperados sem rede (AC-1.4–1.6, AC-1.9, AC-1.12). | T-03, T-10 | `tests/unit/useWeatherSearch.test.tsx` | Test |
 | T-56 | Testar forecast no hook | Controlar seleção e resolução de promises. | Nova cidade vence resposta antiga; loading/success/partial/error e contexto da cidade corretos (AC-1.3, AC-1.11, AC-5.9, AC-5.14). | T-03, T-11 | `tests/unit/useWeatherForecast.test.tsx` | Test |
 | T-57 | Testar retry no hook | Controlar tempo e cliques repetidos. | Uma tentativa ativa, mesma consulta, sem fila/automação; resposta expirada ignorada e prazo 429 respeitado (AC-5.5–5.6, AC-5.11, AC-5.15). | T-03, T-12 | `tests/unit/useWeatherRetry.test.tsx` | Test |
@@ -95,7 +108,7 @@
 | T-61 | Testar cartão diário | Verificar rótulos e condição. | Data, min/max, unidade, ausências e fallback acessíveis (AC-3.3, AC-3.7, AC-5.12). | T-03, T-45 | `tests/unit/ForecastCard.test.tsx` | Test |
 | T-62 | Testar lista diária | Verificar ordem e cardinalidade no DOM. | Cinco datas em ordem, lacuna não desloca outros dias, sem subdivisões horárias; layout real fica no E2E (AC-3.1–3.2, AC-3.6, AC-5.7). | T-03, T-46 | `tests/unit/ForecastList.test.tsx` | Test |
 | T-66 | Testar controle de unidade | Exercitar unidade e teclado por props. | Nome indica unidade ativa, Enter/Espaço/clique disparam callback, sem serviço (AC-4.1, AC-4.4, AC-7.3). | T-03, T-16 | `tests/unit/UnitToggle.test.tsx` | Test |
-| T-67 | Testar composição de App | Integrar UI/hook com serviço mockado. | Inicial sem request; estados/anúncios, unidade e retry propagados; crédito sempre presente; ordem de foco e nenhuma consulta no toggle (AC-4.2–4.3, AC-4.8, AC-5.1–5.2, AC-5.8–5.9, AC-6.1–6.2, AC-7.2–7.3). | T-03, T-17 | `tests/unit/App.test.tsx` | Test |
+| T-67 | Testar composição de App | Integrar UI/hook com serviço mockado. | Inicial com zero chamadas; loading/empty/error/success/partial produzem conteúdos distintos; anúncio uma vez por mudança e foco preservado; crédito em cada estado; contagem de geocoding e forecast inalterada após toggle, inclusive durante loading; serviço mockado, não o hook alvo da integração (AC-4.2–4.3, AC-4.8, AC-5.1–5.2, AC-5.8–5.9, AC-6.1–6.2, AC-7.2–7.3). | T-03, T-17 | `tests/unit/App.test.tsx` | Test |
 
 ## Entrega 6 — E2E e hardening
 
@@ -115,7 +128,7 @@
 | T-27 | Verificar privacidade e idioma | Inspecionar cliente sem instrumentação de produção. | Sem storage de dados, analytics ou destinos extras; recursos locais; reload limpa estado; strings da aplicação pt-BR, nomes próprios conforme provedor; rede/armazenamento verificados (RNF7, RNF9). | T-18 | `tests/e2e/privacy.spec.ts` | Test |
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
 | T-29 | Configurar entrega estática | Preparar hospedagem aprovada sem backend. | Site servido por HTTPS no caminho/base corretos; build de produção carregável; implantação smoke registrada (RNF8; OQ-12 aprovada). | T-17, T-35 | `vite.config.ts`, `README.md` | Infra |
-| T-49 | Configurar CI de validação e entrega | Automatizar checklist e publicar somente após sucesso. | Workflow pnpm executa lint/build/unit/E2E e bloqueia publicação se qualquer etapa falhar; sem instalar ferramentas alternativas (stack do projeto, RNF6/RNF8). | T-19, T-20, T-29 | `.github/workflows/weather-app.yml` | Infra |
+| T-49 | Configurar CI de validação e entrega | Automatizar checklist e publicar somente após sucesso. | Run registra `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm test:e2e` com sucesso; job de publicação depende explicitamente de todos os checks; pnpm/lockfile e browsers Playwright instalados pelo workflow, sem gerenciador alternativo (stack do projeto, RNF6/RNF8). | T-19, T-20, T-29 | `.github/workflows/weather-app.yml` | Infra |
 | T-50 | Definir operação e disponibilidade | Registrar configuração operacional da hospedagem. | Monitoramento mensal separado do provedor, meta e retenção de logs aprovadas, sem analytics client-side; evidência de configuração e smoke registrada (RNF7–RNF8). | T-29, T-35 | `plans/weather-app-plan.md` | Infra |
 | T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
 
