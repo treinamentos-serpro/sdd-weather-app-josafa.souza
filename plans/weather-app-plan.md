@@ -424,31 +424,76 @@ O serviço rejeita falhas com classificação reconhecível pelo hook; não capt
 
 ### Unitários — Vitest + Testing Library
 
-- Funções puras: conversão e arredondamento C↔F, zero negativo, datas/horas em pt-BR e fuso IANA, descrição e ícone para todos os códigos WMO mapeados, fallback para código desconhecido.
-- Serviço: mockar `fetch`; validar URLs/parâmetros, mapeamento de cidade, normalização de DTOs, arrays parciais, associação por data, timeout, HTTP 429 com e sem `Retry-After`, JSON ilegível, ausência de dados utilizáveis e descarte/cancelamento de resposta obsoleta.
-- Componentes/hook: testar estados inicial, loading, vazio, sucesso, parcial e erro; seleção explícita; substituição de cidade; retry manual sem fila; unidade durante loading; teclado, nomes acessíveis e anúncio de estado.
-- Usar consultas acessíveis (`getByRole`, `getByLabelText`) e não chamar APIs reais (convenções do projeto).
-- Cada AC deve ser rastreado a um caso de teste automatizado, contrato separado ou protocolo manual, evitando duplicar casos através das histórias (spec 4.10).
+Vitest cobre regras e estados isolados; Testing Library cobre comportamento observável de componentes e hooks, sem rede real.
+
+| Alvo | Casos e resultados esperados | Referências da spec |
+| --- | --- | --- |
+| `temperature` | Conversão a partir do Celsius original: 25 → 77 °F, 0 → 32 °F, −40 → −40 °F; decimais e negativos da tabela de referência; zero negativo exibido como 0; `null` permanece indisponível; alternar e voltar não modifica o valor original. | AC-4.2, AC-4.6, AC-4.7 |
+| `format` e `weatherCodes` | Datas/horários em pt-BR no fuso da cidade, inclusive Tóquio com data diferente da do dispositivo; todos os códigos WMO documentados; código desconhecido com descrição e ícone neutros. | AC-2.2, AC-2.3, AC-3.3, AC-3.4, AC-3.7; seção 4.1 |
+| Geocoding no serviço | `fetch` mockado: verificar endpoint e parâmetros codificados, trim, acentos/hífen/apóstrofo preservados, campos opcionais ausentes como `null`, resposta válida vazia como lista vazia e estrutura inválida como erro explícito. | AC-1.1, AC-1.7, AC-1.8, AC-1.13, AC-5.3, AC-5.13 |
+| Forecast no serviço | Verificar coordenadas, `current`, `daily`, timezone, Celsius e cinco dias; normalizar arrays paralelos em registros por data; datas fora de ordem e lacunas não deslocam dias; seção atual ausente preserva previsão; não fabricar zero para campo ausente/nulo/inválido. | AC-3.1, AC-3.2, AC-5.7, AC-5.12, AC-5.14, AC-5.16 |
+| Falhas no serviço | Rejeição de rede, HTTP não-2xx, JSON ilegível e ausência total de dados utilizáveis; timeout aos 10 s; 429 com `Retry-After` em segundos, data HTTP, ausente e inválido; cancelamento por substituição distinto de timeout. | AC-5.4, AC-5.6, AC-5.10, AC-5.13, AC-5.16 |
+| `useWeather` | Com serviço mockado, timers controlados e promises resolvidas manualmente: mínimo de caracteres, debounce de 300 ms, limpar termo, descartar respostas antigas e troca de cidade; retry sem fila nem repetição automática; transições dos dois fluxos independentes. | AC-1.4–1.6, AC-1.9, AC-1.11, AC-1.12, AC-5.5, AC-5.11, AC-5.15 |
+| Componentes e composição em `App` | idle: orientação e nenhuma requisição; loading: indicador e campo editável; empty: revisar grafia e sem retry; error: mensagem pt-BR e retry; success: cidade, clima atual e cinco dias; partial: ausências sinalizadas e demais dados visíveis. Atribuição presente em todos os estados. | AC-2.1, AC-3.1, AC-5.1–5.4, AC-5.9, AC-5.12, AC-5.14, AC-6.1, AC-6.2 |
+| Unidade e acessibilidade de componentes | Alternância atualiza todas as temperaturas sem chamada adicional; funciona durante loading; recarregar reinicia Celsius. Verificar callbacks, nomes acessíveis, teclado, foco e região de status sem anúncios duplicados. | AC-4.1–4.5, AC-4.8, AC-5.8, AC-7.1–7.3, AC-7.5 |
+
+Nos testes do serviço, mockar `fetch`; nos testes de hook/App, mockar as funções do serviço. Não mockar a lógica do próprio alvo. Restaurar mocks, timers e relógio após cada teste; fornecer explicitamente instante e fuso quando necessários. Testar debounce em 299 ms/300 ms e timeout antes/no limite de 10 s, sem esperas reais.
+
+Usar queries acessíveis (`getByRole`, `getByLabelText`) e ações com `userEvent`. Não testar detalhes internos de React, classes Tailwind ou igualdade de grandes snapshots. JSDOM não comprova layout, contraste nem experiência real com leitor de tela; essas verificações pertencem ao navegador/revisão manual. A regra de desempate do arredondamento só recebe expectativa definitiva após OQ-16.
 
 ### E2E — Playwright
 
-- Interceptar geocoding e forecast com `page.route`, fixtures controladas e dados fixos; nenhum E2E depende de conectividade ou resposta real do provedor.
-- Cobrir o fluxo busca → seleção → clima atual e cinco dias → alternância de unidade; estados sem resultado, erro, retry, resposta parcial, teclado e unidade enquanto carrega.
-- Executar dimensões definidas em RNF1 (360, 768, 1280 e 1920 px), zoom de 200% e viewport mobile; verificar ausência de rolagem horizontal, alcance de controles e integridade do conteúdo.
-- Executar axe nos fluxos principais e complementar com revisão manual de teclado, foco, leitor de tela e mensagens, conforme RNF2. A integração axe requer dependência adicional ainda ausente do manifesto.
+Playwright verifica integração e experiência no navegador, não repete todas as combinações numéricas unitárias. Interceptar ambos os endpoints com `page.route` e fixtures determinísticas; falhar se a aplicação tentar acessar o provedor sem uma rota prevista. Fixar relógio e fuso do contexto para não depender do dia da execução.
 
-### Verificações fora da suíte automatizada
+| Fluxo | Verificações principais |
+| --- | --- |
+| Caminho principal desktop | Buscar cidade, distinguir homônimas, selecionar explicitamente, exibir clima atual e hoje + quatro dias; alternar unidade em todas as temperaturas e contar chamadas para comprovar ausência de novas requisições. |
+| Sem resultados e recuperação | Busca vazia/curta não consulta; geocoding vazio mostra orientação sem retry; editar termo e buscar novamente permite sucesso. |
+| Falha e retry manual | Simular falha de transporte com rota abortada e falha HTTP com resposta controlada; mensagem distinta de empty; retry refaz a mesma consulta e recupera a tela. Cliques repetidos não criam fila. |
+| Limite de uso e timeout | 429 mantém retry indisponível até o prazo, sem request automático ao liberar; rota pendente chega ao timeout; resposta tardia não substitui o erro ou a tentativa nova. Controlar tempo em vez de aguardar 10 s reais. |
+| Parcial e concorrência | Dia ausente mantém sua posição e demais datas; clima atual ausente não oculta previsão; respostas antigas de busca/cidade não aparecem; alternância durante loading usa a unidade ativa ao renderizar. |
+| Teclado e acessibilidade | Selecionar por setas/Enter, fechar lista com Esc, alternar unidade por teclado, foco visível e preservado, região de status e nomes acessíveis; axe nos estados principais. |
+| Mobile | Viewport 360 × 640 px: busca, seleção, leitura e alternância por toque; cinco dias alcançáveis por rolagem vertical, sem rolagem horizontal na página/previsão; controles com pelo menos 44 × 44 px, respeitada a exceção da spec. |
+| Layout complementar | Larguras 768, 1280 e 1920 px; em 1280 × 800 os cinco dias aparecem simultaneamente; verificar corte de conteúdo, nomes longos e crédito visível em todos os estados. |
+| Recarregamento e privacidade | Após escolher Fahrenheit e cidade, recarregar volta a Celsius e à orientação inicial; inspecionar armazenamento e requisições para comprovar ausência de persistência e analytics. |
 
-- **Contrato real do geocoding:** AC-1.10 como teste separado e explícito, nunca como requisito da suíte funcional determinística.
+Usar assertions com espera automática por estado da UI, não `waitForTimeout` como sincronização. A configuração atual tem projetos `chromium` e `mobile` com perfil iPhone 13; esse perfil não substitui o cenário explícito de 360 × 640 nem comprova Safari real em iOS. A matriz RNF6 precisa de verificação adicional.
+
+A integração axe requer dependência adicional ainda ausente do manifesto. Axe não comprova conformidade AA por si só. Zoom real de navegador a 200% (AC-8.4) deve ser verificado manualmente em navegador suportado; emulação de viewport, CSS `zoom` ou `deviceScaleFactor` não são evidência equivalente.
+
+### Contratos e verificações complementares
+
+- **Contrato real do geocoding:** AC-1.10 como teste separado e explícito contra a API real, fora das suítes funcionais determinísticas; sua falha sinaliza mudança de contrato, sem relaxar silenciosamente a expectativa.
 - **Performance (RNF5):** 30 execuções válidas em 4G simulada; p75 da busca até 2 s após envio, previsão até 3 s após seleção, feedback de loading até 100 ms. Metas aguardam aprovação OQ-11.
 - **Compatibilidade (RNF6):** smoke tests nas duas versões estáveis mais recentes de Chrome, Firefox, Safari e Edge e nas plataformas mobile da matriz; aprovar matriz em OQ-11.
 - **Usabilidade (RNF4):** teste moderado com 5 participantes distribuídos entre P1–P3; pelo menos 4 completam busca, seleção e leitura sem ajuda; confirmar protocolo em OQ-1.
 - **Privacidade (RNF7):** inspecionar rede e armazenamento do navegador para comprovar ausência de analytics, persistência e destinos além do provedor/hospedagem. Definir retenção de logs em OQ-12.
 - **Disponibilidade (RNF8):** meta e monitoramento da hospedagem ainda não definidos; resolver OQ-12 antes do release.
 
-Scripts já disponíveis: `pnpm test`, `pnpm test:e2e`, `pnpm lint`, `pnpm build`. Não executar como validação do documento; serão necessários quando houver mudanças de código em `src/` ou `tests/`.
+### Rastreabilidade e execução
+
+Cada AC deve ter evidência identificada pelo seu ID no teste ou protocolo manual. Usar a dona definida na seção 4.10 da spec para não duplicar tarefas/testes por história; um teste pode verificar vários ACs compatíveis. O teste de contrato AC-1.10 e o protocolo manual AC-8.4 devem constar na cobertura, não desaparecer por estarem fora da suíte principal. Pendências de produto não são testes aprovados: registrar bloqueio e atualizar expectativas quando forem resolvidas.
+
+Nas fases Code/Test, executar primeiro os testes dos alvos alterados. Antes de concluir mudanças em código, executar os comandos do projeto `pnpm lint`, `pnpm build` e `pnpm test`; executar também `pnpm test:e2e` quando houver alterações de fluxo/UI ou testes E2E. `pnpm test:coverage` serve para localizar lacunas, não como substituto da cobertura dos ACs; a spec não estabelece um percentual mínimo. Não instalar dependências nem executar essas suítes apenas para validar este documento.
 
 ## Risks & Trade-offs
+
+### Decisões técnicas e alternativas consideradas
+
+| Decisão adotada | Alternativa considerada | Benefício e custo da escolha | Quando reconsiderar / referência |
+| --- | --- | --- | --- |
+| SPA React com acesso direto à Open-Meteo | Backend/proxy ou SSR | Menos infraestrutura e nenhuma chave no cliente; depende de CORS e disponibilidade externa, sem agregação/cache de servidor. | Se fornecedor/licença exigir segredo ou backend, revisar a spec; backend está fora da v1 (D1/D4, OQ-9). |
+| Estado local em `useWeather`, props e callbacks | Context, Redux ou TanStack Query | Menos dependências e semântica de cache/retry para controlar; exige lógica explícita de concorrência e transições no hook. | Estado compartilhado entre várias telas ou cache aprovado; não necessário para uma cidade/tela (AS-2, RNF7). |
+| `fetch` nativo com validação na borda | Axios/SDK e biblioteca de schemas | Dois endpoints não justificam cliente extra; reduz bundle, mas validação e classificação de erro precisam de testes próprios. | Crescimento expressivo de contratos/validação pode justificar schema; não confundir tipos TS com validação runtime (RF5.4/RF5.5). |
+| Celsius original e conversão derivada | Refazer forecast por unidade ou armazenar ambas | Evita requests e arredondamentos acumulados; centraliza conversão local, que precisa cobrir negativos, decimais e ausências. | Novas grandezas/unidades dependem de nova decisão, não de um request por toggle (RF4, OQ-3/OQ-16). |
+| Nenhum cache ou persistência | Cache em memória entre consultas, storage ou service worker | Menor complexidade de invalidação e privacidade; nova seleção exige rede e não há offline. | Apenas após revisão de escopo e política de dados (AS-8/AS-9, OQ-7). |
+| Debounce, cancelamento e retry manual | Enviar por tecla, ignorar sem abortar ou retry automático | Reduz tráfego e impede atualização obsoleta; requer timers/IDs e ação do usuário para recuperar falhas. | Alteração depende de regras aprovadas, não de padrão automático de biblioteca (RF1.5/RF1.6/RF5.7). |
+| Dados parciais com ausências explícitas | Rejeitar toda a resposta ou preencher valores padrão | Preserva informação útil sem inventar medidas; aumenta estados e exige validação campo a campo. | Definição de dados utilizáveis e inconsistências precisa ser fechada na spec (RF5.5). |
+| Catálogo WMO local e tipos normalizados | Expor DTO bruto ou texto remoto aos componentes | UI independente do provedor e pt-BR consistente; exige manutenção do catálogo e mapeamento. | Atualização de códigos/fornecedor exige contrato e fixtures revisados (RNF9, seção 4.1). |
+| Vitest extensivo + E2E focado com rede interceptada | Tudo E2E ou chamadas reais em toda suíte | Feedback rápido e determinístico; mocks podem divergir do provedor e não provam disponibilidade real. | Contrato real separado e verificações de release cobrem essa limitação, sem tornar a suíte principal dependente da rede (AC-1.10, RNF6/RNF8). |
+| Axe e testes de teclado mais revisão manual | Apenas ferramenta automática ou apenas revisão manual | Automação encontra regressões repetíveis; revisão cobre leitor de tela, foco e zoom real, com custo humano recorrente. | Matriz e exigência AA precisam de aprovação; não declarar conformidade só com axe (RNF2, OQ-10). |
+
+### Riscos remanescentes
 
 | Risco / trade-off | Decisão ou mitigação | Impacto / pendência |
 | --- | --- | --- |
