@@ -183,6 +183,31 @@ interface WeatherService {
 - O catálogo de códigos cobre códigos WMO documentados pelo provedor, com descrição pt-BR e ícone. Código desconhecido usa descrição "Condição indisponível" e ícone neutro (AC-2.3, AC-3.7).
 - Os nomes de tipos externos devem deixar claro que são DTOs e permanecer privados ao serviço. Componentes consomem apenas os tipos normalizados acima.
 
+### Catálogo WMO proposto
+
+A spec exige cobertura integral dos códigos documentados. A tabela define as descrições pt-BR e chaves de ícones; códigos não listados usam `unknown` e "Condição indisponível". Cada código agrupado deve ter seu próprio caso de teste. Os códigos 2, 61 e 80 preservam os textos das fixtures da spec.
+
+| Código WMO | Descrição pt-BR | `WeatherIconKey` |
+| --- | --- | --- |
+| 0 | Céu limpo | `clear` |
+| 1 | Predominantemente limpo | `clear` |
+| 2 | Parcialmente nublado | `partly-cloudy` |
+| 3 | Nublado | `overcast` |
+| 45 | Nevoeiro | `fog` |
+| 48 | Nevoeiro com deposição de geada | `fog` |
+| 51 / 53 / 55 | Garoa fraca / moderada / intensa | `drizzle` |
+| 56 / 57 | Garoa congelante fraca / intensa | `drizzle` |
+| 61 / 63 / 65 | Chuva fraca / moderada / intensa | `rain` |
+| 66 / 67 | Chuva congelante fraca / intensa | `rain` |
+| 71 / 73 / 75 | Neve fraca / moderada / intensa | `snow` |
+| 77 | Grãos de neve | `snow` |
+| 80 / 81 / 82 | Pancadas de chuva fracas / moderadas / violentas | `rain-showers` |
+| 85 / 86 | Pancadas de neve fracas / intensas | `snow-showers` |
+| 95 | Trovoadas | `thunderstorm` |
+| 96 / 99 | Trovoadas com granizo fraco / intenso | `thunderstorm-hail` |
+
+O código preserva a intensidade na descrição mesmo quando o ícone é compartilhado. Não acrescentar `is_day` ou variantes noturnas: não são necessárias ao mínimo especificado. Usar ícones locais com alternativa textual, sem carregar um serviço externo de ícones (AC-2.1, RNF7).
+
 ## Data Flow
 
 ### Diagrama de fluxo
@@ -558,3 +583,48 @@ Nas fases Code/Test, executar primeiro os testes dos alvos alterados. Antes de c
 ### Portões antes de decompor/implementar
 
 A spec está explicitamente em rascunho. Antes de aprovar tarefas, resolver ou formalmente aceitar premissas relevantes de OQ-2, OQ-4, OQ-6, OQ-9, OQ-10, OQ-11, OQ-12, OQ-13, OQ-16, OQ-17 e OQ-18; tratar também OQ-3 e OQ-7 conforme o critério de saída da seção 10 da spec. Rever os contratos deste plano e critérios afetados após cada decisão. A ausência de timezone válido e a definição operacional de "dados utilizáveis" também precisam de regra explícita antes de fechar os contratos do serviço.
+
+### Revisão do plano — P4.8
+
+**Parecer:** cobre a abordagem dos RF1–RF6 e RNF1–RNF9, mas **não está integralmente fechado para implementação ou release**. Cobertura arquitetural não equivale a decisão aprovada, teste executado ou requisito entregue. A revisão não altera o status de rascunho da spec nem resolve suas OQs.
+
+#### Cobertura e lacunas
+
+| Requisitos | Cobertura no plano | Situação |
+| --- | --- | --- |
+| RF1.1–RF1.6 | Geocoding, campos opcionais, codificação, seleção explícita, debounce e invalidação imediata de resultados antigos. | Coberto com limites, ordenação e homônimas indistinguíveis pendentes em OQ-13. |
+| RF2.1–RF2.2 | Temperatura/condição/ícone, horário local da leitura e timezone IANA; catálogo WMO agora explícito. | Falta decidir validade temporal da leitura (OQ-18) e fallback para fuso/horário inválido. |
+| RF2.3 | Não solicitar campos extras; não inventar unidades. | Condicional a OQ-3; não há critério definido para campos ainda não aprovados. |
+| RF3.1–RF3.5 | Cinco datas locais, hoje rotulado, mínima/máxima/condição, agregação diária e alinhamento por data. | Coberto sob AS-4; confirmar OQ-4/OQ-6 e regras para datas inconsistentes. |
+| RF4.1–RF4.5 | Unidade inicial Celsius, controle visível/acessível, conversão derivada sem request, preservação da cidade e reset ao recarregar. | Coberto; desempate do arredondamento e persistência aguardam OQ-16/OQ-7. |
+| RF5.1–RF5.8 | Estados independentes, erro versus empty, parcial, timeout, anúncios, retry manual sem fila nem repetição automática. | Coberto; texto inicial, definição de dado utilizável e regras finais dependem de OQ-8/OQ-13/OQ-17. |
+| RF6.1 | Crédito em todos os estados e teste de presença/link. | Obrigações e texto da licença pendentes em OQ-9. A prioridade Should da spec não dispensa obrigação legal; reconciliar com a regra de bloqueio de release da seção 4.10. |
+| RNF1–RNF2 | Mobile-first, viewports, toque, teclado, nomes, status, axe e revisão manual/zoom. | Falta detalhar contrato de interação e critérios de contraste conforme decisão abaixo; nível AA depende de OQ-10. |
+| RNF3–RNF4 | Resiliência coberta pelos estados/erros; protocolo de teste moderado registrado. | Protocolo de usabilidade depende de OQ-1. |
+| RNF5–RNF6 | Medição p75 e matriz de navegadores com limites explícitos da emulação mobile. | OQ-11 pendente; smoke tests não demonstram por si só duas versões reais de cada navegador. |
+| RNF7–RNF9 | Sem persistência/analytics; inspeção de rede, meta de disponibilidade pendente e catálogo pt-BR. | Hospedagem/logs/meta dependem de OQ-12; revisar também todos os textos visíveis, não só condições WMO. |
+
+#### Regras já determinadas que devem orientar as tarefas
+
+- **Acessibilidade:** `SearchBar` usa padrão combobox/listbox com label, estado expandido, associação à lista e identificação do item ativo. Setas percorrem resultados, Enter seleciona e Esc fecha sem apagar termo nem perder foco. Resultados não entram no Tab; ordem de foco: busca → unidade → retry → atribuição, omitindo indisponíveis (AC-7.1–7.5).
+- **Contraste:** medir em todos os estados sobre o fundo efetivamente composto do glassmorphism: texto normal ≥ 4,5:1; texto grande, ícones informativos e bordas ≥ 3:1. Não presumir que axe cobre todos os ícones, fundos translúcidos e estados de foco; complementar com medição específica (AC-7.4).
+- **Visual:** manter Tailwind e dark glassmorphism conforme instruções vigentes, com grid responsivo de dois/três/cinco itens por linha, sem scroll horizontal. Tema/guia de marca só mudam após decisão explícita em OQ-14, não por escolha da implementação. Manter um componente por arquivo, funções puras em `lib` e tipos compartilhados em `types`.
+- **Privacidade:** servir fontes e ícones localmente para não introduzir destinos além do provedor/hospedagem. Não acrescentar fontes remotas ou SDK de monitoramento contrariando RNF7.
+
+#### Decisões ainda faltantes e riscos de retrabalho
+
+| Ponto | Por que ainda bloqueia / próxima decisão |
+| --- | --- |
+| Validação operacional | Definir na spec o que torna um campo/seção utilizável, timezone/horário inválido, coordenadas inválidas, mínima maior que máxima e datas duplicadas; definir se um geocoding parcialmente inválido falha ou preserva resultados válidos com aviso. Não descartar dados silenciosamente. |
+| Meia-noite e atualização | A grade usa a data local no momento da resposta, mas um request iniciado antes da meia-noite pode retornar apenas quatro datas ainda futuras/atuais. RF5.5 permite lacunas; confirmar se exige nova consulta e o comportamento de tela aberta durante a virada. Não introduzir refresh automático sem decisão de produto. |
+| `Retry-After` no navegador | Confirmar acesso CORS ao cabeçalho; se não for exposto pelo provedor, não é legível no cliente. Pela premissa atual, prazo indisponível permite retry manual imediato; se o negócio exigir respeito a prazo oculto, rever contrato/arquitetura em OQ-17, sem inventar espera fixa ou proxy fora de escopo. |
+| Tamanho/ordem da busca e arredondamento | Resolver OQ-13/OQ-16 antes de fixar parâmetros e expectativas de borda dos testes. Evita limites arbitrários e empates arredondados por acidente. |
+| Aprovação versus release | A tabela da spec marca OQ-12 como bloqueante para release, mas o critério de saída exige resposta antes do plano. Reconciliar a spec; este plano permanece provisório e não presume autorização para avançar. |
+
+#### Simplicidade e aderência às instruções
+
+Não há necessidade demonstrada de Redux, Context global, TanStack Query, roteador, backend, cliente HTTP extra ou biblioteca genérica de repositórios. `WeatherService` representa somente as duas operações reais e pode ser implementado por funções exportadas, sem classes ou injeção de dependência.
+
+A repetição da cidade em `WeatherState` e `WeatherData` é um ponto de atenção: ambas representam a mesma seleção, não fontes de estado independentes. Os contratos atuais exigem igualdade; na implementação, construir o resultado com a cidade da operação e derivar `selectedCity` do estado, evitando `useState` adicional. Extrair hooks/arquivos só quando responsabilidades ou tamanho justificarem, não apenas para imitar uma arquitetura maior.
+
+O plano respeita a stack, a separação de camadas, o idioma pt-BR, a acessibilidade e a restrição de não gerar código final de [copilot-instructions.md](../.github/copilot-instructions.md). O checklist lint/build/test aplica-se somente às futuras mudanças de código; esta revisão é documental. O catálogo WMO e as regras de interação/contraste foram explicitados nesta revisão; as decisões de produto acima permanecem abertas, sem alteração unilateral da spec.
