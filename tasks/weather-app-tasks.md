@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Versão | 0.5 (rascunho com tarefas de teste explícitas) |
+| Versão | 0.6 (rascunho com rastreabilidade funcional) |
 | Entrada | [Plano técnico](../plans/weather-app-plan.md), versão 0.1, incluindo P4.8 |
 | Fonte normativa | [Spec](../specs/weather-app-spec.md), versão 0.2 |
 | Status | Proposta; implementação bloqueada até concluir T-01 |
@@ -138,6 +138,47 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-26 | Executar matriz de browsers | Verificar plataformas reais aprovadas. | Duas versões estáveis mais recentes de Chrome/Firefox/Safari/Edge, Safari iOS e Chrome Android com resultado por fluxo no build publicado; perfil emulado não comprova browser real (RNF6). | T-49 | `tests/manual/compatibility.md` | Test |
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
 | T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa no mesmo estado/artefato avaliado; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-68, T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
+
+## Rastreabilidade funcional — P5.6
+
+Cobertura por **sub-requisito**, para não esconder lacunas sob um RF amplo. "Previsto" significa que existem tarefas correspondentes, não que o requisito foi implementado ou testado. T-02 fornece contratos e T-17 integra os fluxos; a tabela destaca os responsáveis diretos pelo comportamento. As tarefas de decisão não contam como implementação.
+
+| Requisito da spec | Comportamento | Tarefas de implementação | Tarefas de verificação | Cobertura / pendência |
+| --- | --- | --- | --- | --- |
+| RF1.1 | Digitar termo, trim e preservar caracteres | T-07, T-10, T-14, T-17 | T-52, T-55, T-59, T-19, T-24 | Previsto; limites e grafia dependem de T-32/OQ-13. |
+| RF1.2 | Resultados com nome, estado e país disponíveis | T-07, T-14 | T-52, T-59, T-19 | Previsto; homônimas indistinguíveis dependem de T-32. |
+| RF1.3 | Seleção explícita define cidade das consultas | T-11, T-14, T-17 | T-56, T-59, T-19 | Previsto, incluindo clique/toque/teclado. |
+| RF1.4 | Cidade selecionada destacada junto aos dados | T-11, T-17 | T-56, T-67, T-19 | Previsto; preservar identificação durante loading/erro. |
+| RF1.5 | Dois caracteres não brancos e debounce de 300 ms | T-10 | T-55, T-19 | Previsto sob AS-6; confirmar valores em T-32. |
+| RF1.6 | Invalidar resultados antigos e limpar busca | T-10, T-14, T-17 | T-55, T-59, T-47 | Previsto; não limpar a cidade/dados selecionados. |
+| RF2.1 | Temperatura, descrição pt-BR e ícone atuais | T-08, T-06, T-15, T-17 | T-53, T-51, T-60, T-19 | Previsto, incluindo fallback de condição desconhecida. |
+| RF2.2 | Horário da leitura no fuso IANA da cidade | T-08, T-05, T-15 | T-53, T-38, T-60 | Previsto; fuso/horário inválido e idade máxima dependem de T-31/T-34. |
+| RF2.3 | Campos meteorológicos adicionais, se aprovados | — | — | **Sem tarefa de implementação/teste específica:** conteúdo ainda não definido em OQ-3. T-31 decide e T-36 cria tarefas/ACs se houver inclusão. |
+| RF3.1 | Exatamente hoje local + quatro dias | T-08, T-05, T-46, T-17 | T-53, T-38, T-62, T-19, T-21 | Previsto; virada de dia depende de T-31. |
+| RF3.2 | Data, mínima, máxima, descrição e ícone por dia | T-08, T-04, T-05, T-06, T-45 | T-53, T-37, T-38, T-51, T-61, T-19 | Previsto, incluindo rótulos e alternativas textuais. |
+| RF3.3 | Primeiro dia identificado como Hoje | T-05, T-45, T-46 | T-38, T-61, T-62, T-19 | Previsto sob AS-4; confirmação em T-31/OQ-6. |
+| RF3.4 | Previsão diária, sem granularidade horária | T-08, T-46 | T-53, T-62 | Previsto; confirmação em T-31/OQ-4. |
+| RF3.5 | Associar valores por data sem deslocar lacunas | T-08, T-45, T-46 | T-53, T-61, T-62, T-20 | Previsto; datas duplicadas/inválidas dependem de T-34. |
+| RF4.1 | Controle visível de alternância °C/°F | T-39, T-16, T-17 | T-58, T-66, T-19, T-22 | Previsto para toque, clique e teclado. |
+| RF4.2 | Celsius como unidade inicial | T-39, T-16, T-17 | T-58, T-66, T-19 | Previsto. |
+| RF4.3 | Atualizar todas as temperaturas e seus símbolos | T-04, T-39, T-15, T-45, T-17 | T-37, T-58, T-60, T-61, T-67, T-19, T-47 | Previsto para campos mínimos; arredondamento depende de T-33/OQ-16; extras seguem RF2.3. |
+| RF4.4 | Alternar sem nova busca nem perder cidade | T-39, T-17 | T-58, T-67, T-19 | Previsto; contagem de chamadas verifica ausência de requests. |
+| RF4.5 | Unidade não persiste e reload volta a Celsius | T-39, T-17 | T-58, T-19, T-27 | Previsto sob AS-8; confirmação em T-35/OQ-7. |
+| RF5.1 | Orientação inicial sem consulta automática | T-41, T-13, T-44, T-17 | T-64, T-67, T-20 | Previsto; texto/conteúdo inicial decidido em T-33/OQ-8. |
+| RF5.2 | Loading em busca/forecast com digitação disponível | T-10, T-11, T-40, T-14, T-17 | T-55, T-56, T-63, T-67, T-20 | Previsto; indicador não bloqueia campo nem desloca foco. |
+| RF5.3 | Sem resultados sugere revisar grafia | T-07, T-10, T-41, T-17 | T-52, T-55, T-64, T-20 | Previsto; empty não oferece retry nem dispara forecast. |
+| RF5.4 | Falha explícita, retry manual e prazo de 429 | T-09, T-10, T-11, T-12, T-42, T-17 | T-54, T-55, T-56, T-57, T-65, T-20 | Previsto; regras finais de timeout/429 e CORS em T-32. |
+| RF5.5 | Preservar dados parciais; falhar sem dado utilizável | T-08, T-09, T-11, T-15, T-45, T-46, T-17 | T-53, T-54, T-56, T-60, T-61, T-62, T-20 | Previsto; definição de dados utilizáveis/inconsistentes em T-34. |
+| RF5.6 | Anunciar mudanças a tecnologias assistivas | T-13, T-17 | T-67, T-22, T-23 | Previsto; região estável, foco preservado, sem anúncio repetido. |
+| RF5.7 | Não repetir falhas automaticamente | T-09, T-12 | T-54, T-57, T-20 | Previsto; temporização comprova ausência de request sem ação. |
+| RF5.8 | Retry indisponível em andamento, sem fila | T-12, T-42, T-17 | T-57, T-65, T-20 | Previsto; três acionamentos geram no máximo uma tentativa ativa. |
+| RF6.1 | Crédito e link conforme licença do provedor | T-13, T-17 | T-67, T-20 | Previsto; texto, obrigações e prioridade reconciliados em T-32/OQ-9. |
+
+### Requisitos sem tarefa correspondente
+
+- **RF2.3 é a única lacuna condicional de implementação:** não existem campos extras aprovados nem AC específico na spec. Não tratar T-31/T-36 como código entregue. Se OQ-3 aprovar extras, criar tarefas Data/UI/Test e seus ACs, cobrir unidade/acessibilidade e atualizar esta matriz antes de liberar o escopo.
+- **Os demais 27 sub-requisitos têm tarefas de implementação e verificação previstas.** Isso não elimina as pendências de decisão registradas na tabela nem o bloqueio de T-01.
+- RNFs e tarefas de operação/qualidade continuam válidos; esta tabela não os substitui. T-68 e T-30 consolidam evidências, mas não contam como implementação direta dos RFs.
 
 ## Tarefas de teste explícitas — P5.5
 
