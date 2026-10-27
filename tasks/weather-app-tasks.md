@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Versão | 0.6 (rascunho com rastreabilidade funcional) |
+| Versão | 0.7 (rascunho estimado e priorizado) |
 | Entrada | [Plano técnico](../plans/weather-app-plan.md), versão 0.1, incluindo P4.8 |
 | Fonte normativa | [Spec](../specs/weather-app-spec.md), versão 0.2 |
 | Status | Proposta; implementação bloqueada até concluir T-01 |
@@ -138,6 +138,106 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-26 | Executar matriz de browsers | Verificar plataformas reais aprovadas. | Duas versões estáveis mais recentes de Chrome/Firefox/Safari/Edge, Safari iOS e Chrome Android com resultado por fluxo no build publicado; perfil emulado não comprova browser real (RNF6). | T-49 | `tests/manual/compatibility.md` | Test |
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
 | T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa no mesmo estado/artefato avaliado; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-68, T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
+
+## Estimativa e prioridade — P5.7
+
+### Escalas e uso
+
+- **P0:** desbloqueia implementação ou compõe o primeiro fluxo integrado utilizável e sua proteção mínima. Executar primeiro, respeitando dependências.
+- **P1:** valida robustez, acessibilidade, compatibilidade e operação da v1. Pode seguir após a primeira demonstração interna, mas continua obrigatório quando exigido pela spec.
+- **P2:** melhoria opcional ou posterior à v1. **Nenhuma tarefa atual é P2:** não há melhoria opcional aprovada no backlog. Não rebaixar testes, privacidade ou obrigações legais para criar uma distribuição artificial.
+- **P (pequeno):** regra/arquivo localizado e baixa incerteza; **M (médio):** múltiplos casos ou integração limitada; **G (grande relativo):** alta incerteza, concorrência ou coordenação externa. Não são horas nem prazo; espera por aprovadores, participantes e plataformas é separada do esforço.
+- Um G pode alterar apenas um arquivo: tamanho depende do comportamento e risco, não só da contagem de arquivos. Antes de executar um G, revisar a estimativa e dividir novamente se houver unidades independentes, preservando IDs e rastreabilidade.
+- Prioridade não substitui dependência nem MoSCoW. Publicação/aceite continuam nos gates definidos; P1 não significa dispensável. Estimativas pressupõem T-01 aprovado e ferramentas existentes funcionais; recalibrar após decisões ou mudança de escopo.
+
+### Classificação de todas as tarefas
+
+| Tarefa | Prioridade | Tamanho | Principal fator da estimativa |
+| --- | --- | --- | --- |
+| T-01 | P0 | P | Gate documental após decisões consolidadas. |
+| T-02 | P0 | M | Contratos e uniões de estado compartilhados. |
+| T-03 | P0 | P | Duas fixtures de referência. |
+| T-04 | P0 | P | Conversão e arredondamento puros. |
+| T-05 | P0 | M | Datas civis, fuso e meia-noite. |
+| T-06 | P0 | M | Cobertura completa e localização WMO. |
+| T-07 | P0 | M | Parâmetros, opcionais e validação de cidades. |
+| T-08 | P0 | G | Arrays paralelos, grade local e dados parciais. |
+| T-09 | P0 | M | Timeout, abort e formatos de prazo HTTP. |
+| T-10 | P0 | G | Debounce, invalidação e respostas fora de ordem. |
+| T-11 | P0 | M | Cidade da operação e estados parciais. |
+| T-12 | P0 | M | Retry sem fila e controle de prazo. |
+| T-13 | P0 | P | Shell, crédito e região de anúncio. |
+| T-14 | P0 | M | Combobox acessível e seleção explícita. |
+| T-15 | P0 | M | Dados atuais, unidade e ausências. |
+| T-16 | P0 | P | Controle de unidade por callback. |
+| T-17 | P0 | G | Ligação entre estado, ações e apresentação. |
+| T-18 | P0 | M | Rede interceptada e contexto determinístico. |
+| T-19 | P0 | M | Fluxo completo em desktop e mobile. |
+| T-20 | P1 | G | Matriz de falhas, prazos e recuperação. |
+| T-21 | P1 | M | Medições em quatro larguras. |
+| T-22 | P1 | M | Axe, interação e contraste composto. |
+| T-23 | P1 | M | Protocolo manual de leitor e zoom real. |
+| T-24 | P1 | P | Um contrato real, sujeito ao provedor. |
+| T-25 | P1 | M | Trinta medições e análise p75. |
+| T-26 | P1 | G | Matriz de versões e dispositivos reais. |
+| T-27 | P1 | M | Inspeção de rede, storage e textos. |
+| T-28 | P1 | G | Recrutamento e cinco sessões moderadas. |
+| T-29 | P1 | P | Base do build e preview estático. |
+| T-30 | P1 | M | Consolidar evidências do mesmo artefato. |
+| T-31 | P0 | M | Decisões de escopo e validade temporal. |
+| T-32 | P0 | G | Provedor, licença e alinhamento legal/técnico. |
+| T-33 | P0 | G | Aprovação multidisciplinar de UX e metas. |
+| T-34 | P0 | G | Regras ainda abertas de validade dos dados. |
+| T-35 | P0 | M | Privacidade e decisões operacionais. |
+| T-36 | P0 | M | Sincronização de plano e tarefas. |
+| T-37 | P0 | P | Testes numéricos tabulares. |
+| T-38 | P0 | M | Relógio/fusos e datas de referência. |
+| T-39 | P0 | P | Preferência em memória, sem rede. |
+| T-40 | P0 | P | Apresentação de loading isolada. |
+| T-41 | P0 | P | Duas variantes de orientação. |
+| T-42 | P0 | P | Mensagem e callback de recuperação. |
+| T-43 | P0 | M | Tema, fonte local e foco. |
+| T-44 | P0 | P | Bootstrap e import de estilos. |
+| T-45 | P0 | M | Conteúdo diário e alternativas textuais. |
+| T-46 | P0 | P | Composição e ordem dos cartões. |
+| T-47 | P1 | M | Resolução controlada de corridas no navegador. |
+| T-48 | P1 | P | Dependência e lockfile da integração axe. |
+| T-49 | P1 | M | Checks, browsers, publicação e smoke. |
+| T-50 | P1 | M | Evidência operacional e retenção de logs. |
+| T-51 | P0 | P | Percorrer catálogo e fallback. |
+| T-52 | P0 | M | Fixtures e parâmetros do geocoding. |
+| T-53 | P0 | M | Associação por data e parciais. |
+| T-54 | P0 | M | Mock de transporte e limites temporais. |
+| T-55 | P0 | M | Timers e respostas invertidas. |
+| T-56 | P0 | M | Seleção concorrente e transições. |
+| T-57 | P0 | M | Prazo, fila e ausência de automação. |
+| T-58 | P0 | P | Unidade e contagem de chamadas. |
+| T-59 | P0 | M | Teclado, lista e callbacks. |
+| T-60 | P0 | P | Render de atual válido/parcial. |
+| T-61 | P0 | P | Conteúdo de um cartão. |
+| T-62 | P0 | P | Ordem e cardinalidade no DOM. |
+| T-63 | P0 | P | Indicador e foco preservado. |
+| T-64 | P0 | P | Orientação sem retry. |
+| T-65 | P0 | P | Retry habilitado/desabilitado. |
+| T-66 | P0 | P | Teclado e unidade por props. |
+| T-67 | P0 | M | Integração real de hook/UI com serviço mockado. |
+| T-68 | P0 | P | Execução conjunta e registro do checklist. |
+
+### Sequência sugerida por resultado visível
+
+Os agrupamentos técnicos anteriores continuam sendo o catálogo de dependências. A execução deve puxar o menor conjunto que produz o próximo resultado, e trazer seus testes junto — não terminar todos os services antes de começar qualquer UI. Dentro de cada conjunto, seguir as dependências diretas das linhas T-NN.
+
+| Marco / fatia | Tarefas novas nesse marco | Resultado demonstrável e condição de aceite |
+| --- | --- | --- |
+| 0 — Desbloquear decisões | T-31, T-32, T-33, T-35 → T-34 → T-36 → T-01, respeitando dependências específicas | Spec/plano aprovados; nenhuma implementação antes desse gate. Trabalho de decisão não é uma fatia funcional. |
+| 1 — Primeira tela visível (habilitadora) | T-02, T-03, T-40, T-41, T-42, T-43, T-13, T-44; T-63, T-64, T-65 | Aplicação abre com orientação inicial, estilos locais e crédito, sem chamada automática. Estados isolados verificados pelos testes. Não é ainda uma fatia ponta a ponta de consulta; não apresentar fixtures como previsão real. |
+| 2 — Consultar e interpretar o clima (primeira fatia vertical completa) | T-04, T-05, T-06, T-07, T-08, T-09, T-10, T-11, T-12, T-39, T-14, T-15, T-45, T-46, T-16, T-17; T-37, T-38, T-51–T-62, T-66, T-67, T-68, T-18, T-19 | Input → geocoding → seleção → forecast → estado → clima atual/cinco dias e unidade; fluxo aprovado em desktop/mobile com rotas controladas. Testes isolados acompanham cada alvo; a aplicação usa serviços reais, sem dados fictícios embutidos. Demonstração interna, ainda sem aceite de release. |
+| 3 — Recuperar falhas e usar com autonomia (fatia de robustez transversal) | T-20, T-47, T-21, T-48, T-22, T-27, T-23, T-24 | Validar no navegador rede/timeout/429/parciais, corridas, teclado, leitor de tela, toque, zoom e privacidade; registrar contrato real separadamente. A lógica de erro/acessibilidade já nasce nos componentes e serviços da fatia 2, não é adiada para esta fase; aqui se completa a evidência. |
+| 4 — Entregar e aceitar a v1 | T-29, T-49, T-50, T-25, T-26, T-28, T-30 | Artefato publicado, smoke e operação configurados; performance, compatibilidade e usabilidade medidas; liberar somente após gate final. Publicar para verificação não equivale a aprovar release. |
+
+**Limite do grafo atual:** T-17 depende de todo o hook e dos componentes de previsão/unidade. Portanto, uma fatia integrada de "só buscar cidades" não pode ser declarada concluída antes desses pré-requisitos. A fatia 2 é relativamente larga, apesar das tarefas pequenas. Para reduzi-la no futuro, aprovar uma divisão adicional de T-17 e dos contratos de composição, registrando novas dependências e testes antes de executar; esta estimativa não remove gates nem marca tarefas parcialmente feitas como concluídas.
+
+É possível mostrar componentes controlados em seus testes durante a construção da fatia 2, mas isso não substitui integração nem justifica um segundo App de demonstração. Nenhuma fatia exige concluir P1 antes de demonstrar internamente o núcleo P0; todas as exigências da spec continuam obrigatórias para a v1. Não somar P/M/G como dias ou prometer data sem capacidade de equipe e confirmação das dependências externas.
 
 ## Rastreabilidade funcional — P5.6
 
