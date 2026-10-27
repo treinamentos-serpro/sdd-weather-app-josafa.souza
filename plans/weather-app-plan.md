@@ -46,6 +46,33 @@ React UI
 - **Funções puras:** conversão de temperatura, formatação pt-BR e catálogo de condições WMO ficam fora do componente.
 - **Sem persistência:** não usar backend, banco, `localStorage`, `sessionStorage`, cache de aplicação ou analytics na v1 (D4, RNF7, RNF8, AS-8, AS-12).
 
+### Responsabilidades e dependências
+
+| Camada | Deve fazer | Não deve fazer | Como testar isoladamente |
+| --- | --- | --- | --- |
+| `components/` — apresentação | Receber dados e callbacks tipados; renderizar estados, rótulos, foco e controles acessíveis. Estado visual local, como item ativo da lista, pode ficar no componente. | Chamar `fetch`, interpretar DTOs, implementar debounce de rede ou manter cópia dos dados meteorológicos. | Testing Library com props e callbacks controlados; verificar conteúdo, teclado, nomes acessíveis e ações, sem rede (RNF1/RNF2). |
+| `hooks/` — orquestração | Coordenar busca, seleção, unidade, transições de estado, debounce, retry e identidade das requisições. Invalidar/cancelar operações substituídas e limpar recursos ao desmontar. | Conhecer URLs ou JSON externo; gerar JSX; duplicar regras de conversão e formatação. | `renderHook` com serviço mockado, timers controlados e promises resolvidas em ordens diferentes; verificar estados observáveis (RF1, RF4, RF5). |
+| `services/` — dados | Construir URLs, executar `fetch`, impor timeout por requisição, verificar HTTP/`Retry-After`, validar JSON e normalizar para o domínio. Respeitar cancelamento recebido do hook. | Importar React, atualizar estado da tela ou escolher textos e estilos de erro para a UI. | Vitest com `fetch` mockado e fixtures externas; verificar parâmetros, falhas e normalização sem montar componentes (RF2/RF3/RF5). |
+| `lib/` — funções puras | Converter medidas, formatar datas/horários/números e resolver códigos WMO com entradas explícitas. | Fazer rede, acessar armazenamento, criar timers ou depender implicitamente do relógio/fuso do dispositivo. | Vitest com tabelas de entrada/saída; sem DOM, rede ou mocks de React (AC-2.2, AC-3.4, AC-4.6). |
+| `types/` — contratos | Declarar tipos de domínio e contratos compartilhados entre as camadas. | Executar validação em runtime ou conter DTOs usados apenas pelo serviço. | Type-check no build; validação real das respostas é testada no serviço. |
+
+Direção permitida dos imports:
+
+```text
+main → App → components
+           → hooks → services
+components → lib
+hooks      → lib
+services   → lib (somente helpers puros necessários)
+components / hooks / services / lib → types
+```
+
+`services` e `lib` não importam hooks ou componentes; `lib` não importa serviços. O diagrama representa dependências de código, não chamadas diretas de um componente ao hook: `App` chama `useWeather` uma vez e distribui estado e callbacks aos componentes. Isso mantém uma única fonte de estado para a tela.
+
+As funções de apresentação recebem data, fuso e unidade explicitamente. A consulta ao relógio necessária para identificar hoje local ocorre na borda da operação; o valor é passado às funções puras. Cancelamento por substituição/desmontagem não é falha exibível; timeout é falha e segue RF5.4. O hook mantém o controlador da operação, e o serviço limita a duração efetiva de cada chamada; ambos liberam seus recursos, sem timers concorrentes para o mesmo timeout.
+
+Essa separação permite alterar o parsing da Open-Meteo sem alterar componentes, revisar layout sem afetar requisições e testar corridas/erros sem depender da rede real. Não requer classes, contêiner de injeção ou interfaces genéricas de repositório: funções exportadas do serviço podem ser mockadas diretamente nos testes.
+
 ## Tech Stack
 
 | Decisão | Escolha | Justificativa / rastreabilidade |
@@ -70,7 +97,10 @@ Estrutura proposta, alinhada ao README e às convenções existentes:
 ```text
 src/
 ├── components/
-│   ├── states/                 # Estados visuais de loading, vazio e erro
+│   ├── states/
+│   │   ├── LoadingState.tsx    # Indicador de carregamento
+│   │   ├── EmptyState.tsx      # Orientação inicial ou busca sem resultados
+│   │   └── ErrorState.tsx      # Mensagem e ação de retry recebidas por props
 │   ├── SearchBar.tsx           # Campo, lista e seleção de cidades
 │   ├── CurrentWeather.tsx      # Clima atual
 │   ├── ForecastList.tsx        # Previsão de cinco dias
@@ -86,7 +116,11 @@ src/
 │   └── weatherCodes.ts         # Catálogo WMO pt-BR e fallback
 ├── types/
 │   └── weather.ts              # Tipos compartilhados de domínio e serviço
-└── App.tsx                     # Composição da tela
+├── styles/
+│   └── index.css               # Tailwind e estilos globais
+├── App.tsx                     # Composição da tela e ligação ao hook
+├── main.tsx                    # Bootstrap React e import dos estilos
+└── vite-env.d.ts               # Tipos do ambiente Vite
 
 tests/
 ├── unit/                       # Componentes, hook, serviço e funções puras
@@ -94,6 +128,10 @@ tests/
 ```
 
 Separar arquivos adicionais apenas quando houver uma responsabilidade real; não criar camada genérica de repositórios ou abstração de cliente HTTP para dois endpoints.
+
+`SearchBar` concentra o campo e a lista enquanto esse conjunto permanecer pequeno; navegação da lista e foco são responsabilidades de apresentação. `ForecastList` organiza cinco datas e delega cada registro a `ForecastCard`, usando a data como chave estável. A atribuição Open-Meteo fica fora das áreas condicionais de loading/erro na composição de `App`, para permanecer em todos os estados (RF6). As mensagens de estado têm uma região de anúncio estável, evitando anúncios duplicados ao remontar componentes (AC-5.8).
+
+Nos testes, manter correspondência de responsabilidade, por exemplo: `tests/unit/temperature.test.ts`, `tests/unit/weatherService.test.ts`, `tests/unit/useWeather.test.tsx`, `tests/unit/SearchBar.test.tsx` e `tests/e2e/weather.spec.ts`. Testes de `App` verificam a integração entre hook e componentes; Playwright verifica a aplicação completa com HTTP interceptado. Uma mesma regra não precisa ser reimplementada nem repetida em todas essas camadas de teste.
 
 ## Data Model
 
