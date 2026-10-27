@@ -86,7 +86,7 @@ Prioridade segue MoSCoW. Tudo marcado **Must** compõe o MVP.
 ### RF3 — Exibir previsão de cinco dias (Must)
 
 - RF3.1 O sistema exibe exatamente cinco dias: o dia atual da cidade e os quatro seguintes (D2).
-- RF3.2 Cada dia exibe, no mínimo: a data (dia da semana e dia/mês em pt-BR), temperatura mínima, temperatura máxima, descrição textual e ícone da condição.
+- RF3.2 Cada dia exibe: a data (dia da semana e dia/mês em pt-BR), temperatura mínima, temperatura máxima, descrição textual, ícone da condição e probabilidade máxima diária de precipitação (%), aprovada em P6.5. Probabilidade ausente é "indisponível", nunca 0%.
 - RF3.3 O primeiro item é identificado como "Hoje".
 - RF3.4 A granularidade é diária; previsão horária está fora da v1 (ver Out of Scope e OQ-4, que registra a confirmação desta premissa).
 - RF3.5 Cada valor da previsão é associado à data local retornada pelo provedor, não à posição no array; datas ausentes não deslocam os dados dos dias seguintes.
@@ -405,6 +405,17 @@ Histórias: US3, US4, US7, US8.
 - **Then** a descrição desse dia é "Condição indisponível" e o ícone é neutro
 - **And** as temperaturas e os demais dias válidos continuam visíveis
 - **And** nenhuma mensagem de falha é exibida apenas por causa desse código
+
+#### AC-3.8 — Probabilidade máxima diária de chuva
+
+*Cobre: RF3.2*
+
+- **Given** previsão com probabilidade máxima diária de chuva de 0%, 60%, 100% e um dia sem esse campo
+- **When** os cartões são exibidos em °C ou °F
+- **Then** os valores aparecem como 0%, 60%, 100% e "indisponível", respectivamente, com rótulo que identifica a probabilidade máxima diária
+- **And** a alternância de temperatura não altera probabilidades nem solicita novos dados
+
+AC-3.8 pertence a US3; US7/US8 verificam sua apresentação acessível e responsiva.
 
 ### 4.5 RF4 — Alternar unidade de temperatura
 
@@ -783,7 +794,7 @@ Cobertura por sub-requisito:
 | RF2.2 | AC-2.2 |
 | RF2.3 | AC-2.4 |
 | RF3.1 | AC-3.1, AC-3.2, AC-3.4, AC-3.5 |
-| RF3.2 | AC-3.3, AC-3.7 |
+| RF3.2 | AC-3.3, AC-3.7, AC-3.8 |
 | RF3.3 | AC-3.2, AC-3.4 |
 | RF3.4 | AC-3.6 |
 | RF3.5 | AC-3.2, AC-5.7 |
@@ -808,7 +819,7 @@ Cobertura por requisito e história:
 | --- | --- | --- |
 | RF1 | US1, US7, US8 | AC-1.1 – AC-1.13, AC-7.1, AC-7.2, AC-7.3, AC-7.5, AC-8.1, AC-8.3, AC-8.4 |
 | RF2 | US2, US7, US8 | AC-2.1 – AC-2.4, AC-7.3, AC-8.1, AC-8.4 |
-| RF3 | US3, US4, US7, US8 | AC-3.1 – AC-3.7, AC-5.7, AC-7.3, AC-8.1, AC-8.2, AC-8.4 |
+| RF3 | US3, US4, US7, US8 | AC-3.1 – AC-3.8, AC-5.7, AC-7.3, AC-8.1, AC-8.2, AC-8.4 |
 | RF4 | US5, US7, US8 | AC-4.1 – AC-4.8, AC-7.2, AC-7.3, AC-8.3 |
 | RF5 | US6, US7, US8 | AC-5.1 – AC-5.16, AC-7.2, AC-8.3 |
 | RF6 | — | AC-6.1, AC-6.2 |
@@ -824,7 +835,7 @@ Cobertura por história:
 | --- | --- | --- | --- | --- | --- | --- |
 | US1 | P1 | RF1 | AC-1.1 – AC-1.13 | — | RNF4, RNF5, RNF7, RNF9 | OQ-1, OQ-7, OQ-11, OQ-13 |
 | US2 | P2 | RF2 | AC-2.1 – AC-2.4 | AC-5.12, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-6, OQ-11, OQ-18 |
-| US3 | P1 | RF3 | AC-3.1, AC-3.2, AC-3.4, AC-3.6 | AC-3.3, AC-5.7, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-4, OQ-6, OQ-11 |
+| US3 | P1 | RF3 | AC-3.1, AC-3.2, AC-3.4, AC-3.6, AC-3.8 | AC-3.3, AC-5.7, AC-5.14 | RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-4, OQ-6, OQ-11 |
 | US4 | P3 | RF3 | AC-3.3, AC-3.7 | AC-3.1, AC-5.7, AC-5.12, AC-8.2 | RNF1, RNF3, RNF4, RNF5, RNF9 | OQ-1, OQ-3, OQ-11 |
 | US5 | P1 | RF4 | AC-4.1 – AC-4.3, AC-4.5 – AC-4.8 | — | RNF7 | OQ-3, OQ-7, OQ-16 |
 | US6 | P2 | RF5 | AC-5.1 – AC-5.7, AC-5.9 – AC-5.16 | — | RNF3, RNF5, RNF9 | OQ-8, OQ-11, OQ-13, OQ-17 |
@@ -903,9 +914,9 @@ Premissas adotadas para tornar os critérios verificáveis. Cada uma pode ser re
 | --- | --- | --- |
 | AS-1 | A aplicação é **web responsiva** (não PWA instalável nem app nativo). | A3 → OQ-2 |
 | AS-2 | O usuário consulta **uma cidade por vez**; não há lista ou comparação lado a lado. | A4 → OQ-5 |
-| AS-3 | Clima atual inclui temperatura, condição, horário e as quatro métricas aprovadas em RF2.3/P6.4; previsão inclui data, mín, máx e condição. Outros campos exigem decisão. | A5, A6 → OQ-3, OQ-4 |
+| AS-3 | Clima atual inclui temperatura, condição, horário e as quatro métricas aprovadas em RF2.3/P6.4; previsão inclui data, mín, máx, condição e probabilidade máxima diária de chuva (P6.5). Outros campos exigem decisão. | A5, A6 → OQ-3, OQ-4 |
 | AS-4 | "Hoje" e horários de referência seguem o **fuso horário da cidade consultada**. | A7 → OQ-6 |
-| AS-5 | Apenas temperaturas alternam entre °C/°F; se outras grandezas forem adicionadas (vento, chuva), usam unidades métricas fixas até decisão. | A8 → OQ-3 |
+| AS-5 | Apenas temperaturas alternam entre °C/°F. As métricas de RF2.3 mantêm suas unidades fixas e a probabilidade diária de RF3.2 permanece em %. | A8 → OQ-3, decisões P6.4/P6.5 |
 | AS-6 | A busca dispara a partir de **2 caracteres não brancos**, após **300 ms** sem digitação; espaços nas extremidades são removidos do termo enviado. | A10 → OQ-13 |
 | AS-7 | Cada requisição de busca ou previsão expira **10 segundos após o envio**; resposta tardia não substitui estado de tentativa mais recente. | A11 → OQ-13 |
 | AS-8 | Nenhum dado é guardado no navegador na v1 (cidade, unidade ou cache). | D4, A9 → OQ-7 |
@@ -971,7 +982,7 @@ Itens que **não foram decididos** e não devem ser adivinhados. Premissas usada
 | --- | --- | --- | --- | --- | --- |
 | OQ-1 | Qual o objetivo de negócio e a métrica de sucesso da v1? Haverá medição de uso? | A1, A22 | AS-12 (sem telemetria) | Não | Produto |
 | OQ-2 | A entrega é web responsiva, PWA ou app nativo? | A3 | AS-1 (web responsiva) | **Sim** | Produto |
-| OQ-3 | Quais campos adicionais serão usados? | A5, A8, pergunta 9 | Resolvida parcialmente pelo usuário em P6.4: umidade relativa %, vento a 10 m km/h, precipitação por intervalo mm/duração e pressão local hPa (RF2.3). Outros campos requerem decisão específica. | Não para os campos aprovados | Produto + UX |
+| OQ-3 | Quais campos adicionais serão usados? | A5, A8, pergunta 9 | Aprovados pelo usuário: P6.4 — umidade relativa %, vento a 10 m km/h, precipitação por intervalo mm/duração e pressão local hPa; P6.5 — probabilidade máxima diária de precipitação %, nullable, de `daily.precipitation_probability_max`. Outros campos requerem decisão específica. | Não para os campos aprovados | Produto + UX |
 | OQ-4 | Confirmar que a previsão da v1 é diária e que a previsão horária permanece fora de escopo. | A6 | RF3.4, AC-3.6 | **Sim** | Produto |
 | OQ-5 | O usuário vê uma cidade por vez ou compara várias? | A4 | AS-2 (uma) | Não | Produto |
 | OQ-6 | Confirmar que "Hoje" e o horário da leitura seguem o fuso da cidade, não o fuso do dispositivo. | A7 | AS-4, AC-2.2, AC-3.4 | **Sim** | Produto |

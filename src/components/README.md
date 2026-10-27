@@ -25,3 +25,25 @@ helpers e testes. RF2.3/AC-2.4 registram as quatro métricas aprovadas; T-01 con
 bloqueando a integração/API. `formatTemperature` usa o arredondamento inteiro de
 `Intl.NumberFormat('pt-BR')` (empates afastados de zero), apenas na exibição;
 OQ-16 continua pendente de aprovação formal dessa política para a aplicação.
+
+## ForecastList e ForecastCard
+
+`ForecastList` recebe `days`, `unit` e `today`; `ForecastCard` recebe `day`, `unit`
+e `today`. `today` deve ser YYYY-MM-DD no fuso da cidade; não use a data do
+dispositivo como substituto. Exemplo para a fixture fixa:
+
+```tsx
+<ForecastList days={mockWeatherData.days} unit="celsius" today="2026-10-29" />
+```
+
+O serviço futuro é responsável por fornecer cinco datas únicas, válidas e em
+ordem, preservando registros incompletos. A lista não inventa dados: mantém a
+ordem recebida e comunica vazio. `formatForecastDay` rejeita datas civis inválidas.
+Os cards derivam máxima/mínima em °C/°F e apresentam condição acessível e
+probabilidade máxima diária de chuva em %. Probabilidade nula/inválida é
+indisponível; 0% é válido. A fixture mantém as probabilidades nulas.
+
+P6.5 autoriza apenas componentes, helper, campo nullable e testes, sem API,
+bootstrap ou aprovação global da spec. O grid usa duas, três ou cinco colunas nos
+breakpoints solicitados. A validação visual em navegador/mobile fica para a
+integração, pois o bootstrap da aplicação ainda não existe.

@@ -134,6 +134,7 @@ interface ForecastDay {
   minC: number | null;
   maxC: number | null;
   weatherCode: number | null;
+  precipitationProbabilityPercent: number | null;
 }
 
 interface WeatherData {
@@ -187,6 +188,30 @@ interface WeatherService {
 - O dia e o código de condição podem estar ausentes; `days` ainda representa cinco datas locais, com campos numéricos ou código nulos nos dias incompletos (RF3.5, RF5.5).
 - O catálogo de códigos cobre códigos WMO documentados pelo provedor, com descrição pt-BR e ícone. Código desconhecido usa descrição "Condição indisponível" e ícone neutro (AC-2.3, AC-3.7).
 - Os nomes de tipos externos devem deixar claro que são DTOs e permanecer privados ao serviço. Componentes consomem apenas os tipos normalizados acima.
+
+### Ícones locais
+
+Na implementação isolada P6.4/P6.5, `getWeatherCondition` retorna o símbolo Unicode
+local diretamente em `icon: string`, em vez da chave conceitual `WeatherIconKey`
+abaixo. A descrição também fornece o nome acessível; não há dependência de imagens
+ou biblioteca externa. A tabela continua sendo o catálogo semântico.
+
+### Apresentação diária autorizada em P6.5
+
+`ForecastCard` recebe `{ day: ForecastDay, unit: Unit, today: string }`;
+`ForecastList` recebe `{ days: readonly ForecastDay[], unit: Unit, today: string }`.
+`today` é a data civil YYYY-MM-DD da cidade, fornecida pela camada de estado futura,
+nunca inferida do fuso do dispositivo pelo componente. `formatForecastDay(date, today)`
+formata datas civis via UTC apenas para evitar deslocamento, com dia da semana,
+dia/mês e "Hoje" quando iguais. Datas inválidas lançam `RangeError`; a normalização
+do serviço deve entregar datas válidas e cinco registros únicos em ordem.
+
+A lista preserva ordem e lacunas recebidas, usa chave por data e grid
+`grid-cols-2 sm:grid-cols-3 lg:grid-cols-5`; lista vazia comunica indisponibilidade.
+O card deriva temperaturas com `formatTemperature`, mantém probabilidade em % e
+indica valores ausentes/inválidos como indisponíveis. O serviço futuro deve incluir
+`precipitation_probability_max` em `daily`. A fixture conserva esse novo campo em
+`null`, sem fabricar medições. AC-3.8 cobre a probabilidade.
 
 ### Catálogo WMO proposto
 
@@ -337,21 +362,22 @@ O mínimo de dois caracteres e debounce de 300 ms são regras da aplicação (AS
 | --- | --- |
 | `latitude`, `longitude` | Coordenadas da `City` selecionada. |
 | `current` | `temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,precipitation,surface_pressure`: campos aprovados em P6.4. |
-| `daily` | `temperature_2m_min,temperature_2m_max,weather_code`: mínima, máxima e condição diária. |
+| `daily` | `temperature_2m_min,temperature_2m_max,weather_code,precipitation_probability_max`: mínima, máxima, condição e probabilidade máxima diária de precipitação (%). |
 | `timezone` | `city.timezone`, por exemplo `America/Sao_Paulo`; não usar o fuso do dispositivo. |
 | `temperature_unit` | `celsius`; a troca para Fahrenheit acontece na apresentação sem nova requisição (RF4). |
 | `forecast_days` | `5`: hoje e os quatro dias seguintes. |
 | `timeformat` | `iso8601`: datas e horários locais; não adicionar `Z` aos horários retornados. |
 
-Não solicitar `hourly` ou sensação térmica. P6.4 aprova as quatro métricas atuais de RF2.3: mapear `relative_humidity_2m` → `relativeHumidityPercent`, `wind_speed_10m` → `windSpeedKmh` (enviar `wind_speed_unit=kmh`), `precipitation` → `precipitationMm` (enviar `precipitation_unit=mm`), `surface_pressure` → `surfacePressureHpa`; `current.interval` → `precipitationIntervalSeconds`. Todos são nullable; precipitação sem intervalo positivo válido é indisponível. Exemplos JSON/URL anteriores são resumidos e devem ser estendidos pelo serviço futuro.
+Não solicitar `hourly` ou sensação térmica. P6.4 aprova as quatro métricas atuais de RF2.3: mapear `relative_humidity_2m` → `relativeHumidityPercent`, `wind_speed_10m` → `windSpeedKmh` (enviar `wind_speed_unit=kmh`), `precipitation` → `precipitationMm` (enviar `precipitation_unit=mm`), `surface_pressure` → `surfacePressureHpa`; `current.interval` → `precipitationIntervalSeconds`. Todos são nullable; precipitação sem intervalo positivo válido é indisponível. Os exemplos seguintes são ilustrativos; não são capturas reais.
 
 Exemplo de URL:
 
 ```text
-https://api.open-meteo.com/v1/forecast?latitude=-23.5475&longitude=-46.6361&current=temperature_2m,weather_code&daily=temperature_2m_min,temperature_2m_max,weather_code&timezone=America%2FSao_Paulo&temperature_unit=celsius&forecast_days=5&timeformat=iso8601
+https://api.open-meteo.com/v1/forecast?latitude=-23.5475&longitude=-46.6361&current=temperature_2m,weather_code,relative_humidity_2m,wind_speed_10m,precipitation,surface_pressure&daily=temperature_2m_min,temperature_2m_max,weather_code,precipitation_probability_max&timezone=America%2FSao_Paulo&temperature_unit=celsius&wind_speed_unit=kmh&precipitation_unit=mm&forecast_days=5&timeformat=iso8601
 ```
 
-Exemplo resumido de resposta:
+Exemplo resumido e ilustrativo de resposta (não capturado da API; novas métricas
+nulas preservam a ausência de medidas na fixture de referência):
 
 ```json
 {
@@ -359,22 +385,34 @@ Exemplo resumido de resposta:
   "utc_offset_seconds": -10800,
   "current_units": {
     "time": "iso8601",
+    "interval": "seconds",
+    "relative_humidity_2m": "%",
+    "wind_speed_10m": "km/h",
+    "precipitation": "mm",
+    "surface_pressure": "hPa",
     "temperature_2m": "°C",
     "weather_code": "wmo code"
   },
   "current": {
     "time": "2026-10-29T09:45",
+    "interval": 900,
+    "relative_humidity_2m": null,
+    "wind_speed_10m": null,
+    "precipitation": null,
+    "surface_pressure": null,
     "temperature_2m": 25,
     "weather_code": 2
   },
   "daily_units": {
     "time": "iso8601",
+    "precipitation_probability_max": "%",
     "temperature_2m_min": "°C",
     "temperature_2m_max": "°C",
     "weather_code": "wmo code"
   },
   "daily": {
     "time": ["2026-10-29", "2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"],
+    "precipitation_probability_max": [null, null, null, null, null],
     "temperature_2m_min": [18, 17, 16, 15, 17],
     "temperature_2m_max": [27, 26, 24, 22, 25],
     "weather_code": [2, 61, 3, 0, 80]
@@ -394,6 +432,7 @@ Mapeamento para `CurrentWeather`, `ForecastDay` e `WeatherData`:
 | `daily.time[i]` | `days[].date` | Data local que identifica o registro diário. |
 | `daily.temperature_2m_min[i]` | `days[].minC` | Valor do mesmo índice bruto; ausência/inválido vira `null`. |
 | `daily.temperature_2m_max[i]` | `days[].maxC` | Valor do mesmo índice bruto; ausência/inválido vira `null`. |
+| `daily.precipitation_probability_max[i]` | `days[].precipitationProbabilityPercent` | Mesmo índice/data; número finito entre 0 e 100 (%), inclusive; ausente/inválido vira `null`. Não confundir probabilidade com volume mm. |
 | `daily.weather_code[i]` | `days[].weatherCode` | Código do mesmo índice bruto; descrição e ícone são derivados no cliente. |
 | `current_units`, `daily_units` | Validação do contrato | Conferir Celsius antes de atribuir medidas aos campos `*C`; não apresentar medidas de outra unidade como Celsius. |
 | `timezone`, `utc_offset_seconds` | Metadados externos | Conferir o fuso da resposta; não substituir o identificador IANA por um offset fixo, que não descreve transições de horário. |
