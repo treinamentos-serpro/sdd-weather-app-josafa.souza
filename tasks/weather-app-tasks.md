@@ -9,6 +9,7 @@
 
 ## Regras
 
+- **Exceção autorizada — P6.1:** o usuário autorizou em 27/10/2026 implementar apenas os cinco tipos de domínio de T-02 e uma fixture local em `src/mocks/weatherData.ts`, antes de T-01. Não aprova a spec, não conclui T-01/T-02 integralmente (uniões de estado/erros continuam pendentes) nem libera UI, API ou demais tarefas. A fixture tipada é sintética, com as cinco datas fixas da spec 4.1; para simular Hoje durante desenvolvimento, fixar o relógio em 29/10/2026 no fuso de São Paulo. Importar `mockWeatherData` de `src/mocks/weatherData.ts` apenas explicitamente no desenvolvimento, nunca como fallback de falha da API.
 - IDs são estáveis: T-01–T-30 preservam uma parte do escopo original; T-31 em diante representam os desdobramentos. Número não indica posição de execução.
 - Cada linha é uma tarefa com título, descrição, critérios de aceite, dependências diretas, arquivos prováveis e tipo. Arquivos relativos à raiz; cada tarefa altera no máximo dois arquivos relevantes.
 - Dependências listam tarefas, não ordem implícita dos grupos. Tarefas independentes podem avançar em paralelo, mas alterações no mesmo arquivo exigem coordenação.
