@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Versão | 0.3 (rascunho com critérios verificáveis) |
+| Versão | 0.4 (rascunho ordenado por dependências) |
 | Entrada | [Plano técnico](../plans/weather-app-plan.md), versão 0.1, incluindo P4.8 |
 | Fonte normativa | [Spec](../specs/weather-app-spec.md), versão 0.2 |
 | Status | Proposta; implementação bloqueada até concluir T-01 |
@@ -12,6 +12,7 @@
 - IDs são estáveis: T-01–T-30 preservam uma parte do escopo original; T-31 em diante representam os desdobramentos. Número não indica posição de execução.
 - Cada linha é uma tarefa com título, descrição, critérios de aceite, dependências diretas, arquivos prováveis e tipo. Arquivos relativos à raiz; cada tarefa altera no máximo dois arquivos relevantes.
 - Dependências listam tarefas, não ordem implícita dos grupos. Tarefas independentes podem avançar em paralelo, mas alterações no mesmo arquivo exigem coordenação.
+- A leitura segue decisões → tipos → funções puras → services → hook → componentes → integração → testes → hardening. Componentes controlados não recebem dependência artificial de serviços/hooks: sua ligação acontece em T-17. IDs anteriores são preservados, mesmo quando sua posição muda.
 - Implementação e testes de regressão são entregas distintas. A tarefa de implementação deve ser validada com testes existentes/apropriados; só considerar o conjunto funcional aceito após sua tarefa Test. Não criar uma segunda implementação para atender testes.
 - Para código, executar testes focados e o checklist `pnpm lint`, `pnpm build`, `pnpm test`; fluxos/UI exigem também E2E pertinente. Documentação não exige essas suítes. Falha de baseline deve ser registrada, nunca escondida.
 - Critérios são expectativas, não resultados já obtidos. Nenhuma tarefa está concluída por este documento existir.
@@ -42,7 +43,7 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-36 | Sincronizar contratos e backlog | Incorporar decisões da spec ao plano e às tarefas. | Plano e backlog refletem todas as decisões T-31–T-35; contratos, fixtures propostas e dependências não contradizem os ACs aprovados. | T-33, T-34, T-35 | `plans/weather-app-plan.md`, `tasks/weather-app-tasks.md` | Infra |
 | T-01 | Aprovar passagem para implementação | Conferir o gate documental, não decidir todos os temas numa tarefa só. | Todos os itens do critério de saída da spec com evidência, status aprovado por responsável identificado e sem OQ bloqueante para código; RF1–RF6/RNF1–RNF9 e ACs permanecem coerentes com plano/backlog revisados. | T-36 | `specs/weather-app-spec.md` | Infra |
 
-## Entrega 1 — Tipos e funções puras
+## Entrega 1 — Tipos → funções puras
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -51,7 +52,7 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-05 | Implementar datas e horários locais | Formatar datas e leitura em pt-BR. | Data civil preservada, Hoje e leitura usam fuso da cidade e instante explícito; não depende implicitamente do fuso do dispositivo (RF2.2, RF3.3; AC-2.2, AC-3.2–3.4). | T-02 | `src/lib/format.ts` | Data |
 | T-06 | Implementar catálogo WMO | Retornar descrição e chave de ícone locais. | Todos os 28 códigos do plano mapeados; desconhecido usa descrição indisponível e ícone neutro, sem ocultar dados válidos (RF2.1, RF3.2, RNF9; AC-2.3, AC-3.7). | T-02 | `src/lib/weatherCodes.ts` | Data |
 
-## Entrega 2 — Services e hook
+## Entrega 2 — Services → hook
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -76,8 +77,8 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-46 | Criar lista de cinco dias | Compor cartões em grid responsivo. | Cinco datas em ordem com chave estável por data; sem subdivisão horária; lacunas preservam posição; nenhuma rolagem horizontal (RF3.1, RF3.4–RF3.5; AC-3.1–3.2, AC-3.5–3.6, AC-5.7). | T-45 | `src/components/ForecastList.tsx` | UI |
 | T-16 | Criar controle de unidade | Comunicar troca por callback tipado. | Unidade ativa visível e acessível; clique/toque/Enter/Espaço; foco visível, sem request interno (RF4.1, RNF2; AC-4.1, AC-4.4, AC-7.3). | T-02 | `src/components/UnitToggle.tsx` | UI |
 | T-43 | Preparar estilos globais e fonte local | Aplicar Tailwind e diretriz visual vigente. | Tema dark glassmorphism conforme plano/instruções, fonte local sem destino externo; estados de foco e cores permitem os limiares da spec (RNF1–RNF2, RNF7; AC-7.4). | T-02 | `src/styles/index.css` | UI |
-| T-44 | Preparar bootstrap React | Ligar ponto de entrada e tipos Vite. | Entrada monta `App` e importa estilos, sem consulta automática, store global ou roteador (RF5.1; AC-5.1). | T-43, T-13 | `src/main.tsx`, `src/vite-env.d.ts` | Infra |
 | T-13 | Criar composição visual da tela | Montar shell, crédito e região de anúncio estável. | Crédito aprovado fora de blocos condicionais, link Open-Meteo com nome acessível; região de status sem duplicação; shell sem dados mockados de produção ou rede (RF6, RNF2; AC-5.8, AC-6.1–6.2). | T-40, T-41, T-42, T-43 | `src/App.tsx` | UI |
+| T-44 | Preparar bootstrap React | Ligar ponto de entrada e tipos Vite. | Entrada monta `App` e importa estilos, sem consulta automática, store global ou roteador (RF5.1; AC-5.1). | T-43, T-13 | `src/main.tsx`, `src/vite-env.d.ts` | Infra |
 
 ## Entrega 4 — Integração
 
@@ -109,28 +110,34 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-62 | Testar lista diária | Verificar ordem e cardinalidade no DOM. | Cinco datas em ordem, lacuna não desloca outros dias, sem subdivisões horárias; layout real fica no E2E (AC-3.1–3.2, AC-3.6, AC-5.7). | T-03, T-46 | `tests/unit/ForecastList.test.tsx` | Test |
 | T-66 | Testar controle de unidade | Exercitar unidade e teclado por props. | Nome indica unidade ativa, Enter/Espaço/clique disparam callback, sem serviço (AC-4.1, AC-4.4, AC-7.3). | T-03, T-16 | `tests/unit/UnitToggle.test.tsx` | Test |
 | T-67 | Testar composição de App | Integrar UI/hook com serviço mockado. | Inicial com zero chamadas; loading/empty/error/success/partial produzem conteúdos distintos; anúncio uma vez por mudança e foco preservado; crédito em cada estado; contagem de geocoding e forecast inalterada após toggle, inclusive durante loading; serviço mockado, não o hook alvo da integração (AC-4.2–4.3, AC-4.8, AC-5.1–5.2, AC-5.8–5.9, AC-6.1–6.2, AC-7.2–7.3). | T-03, T-17 | `tests/unit/App.test.tsx` | Test |
+| T-68 | Aceitar regressão unitária integrada | Conferir o conjunto dos testes isolados antes do aceite E2E. | `pnpm lint`, `pnpm build` e `pnpm test` passam com todos os testes predecessores; mocks/timers não contaminam testes vizinhos; registrar comandos/resultados, sem casos ignorados como evidência dos ACs (RF1–RF6; RNF3). | T-37, T-38, T-51, T-52, T-53, T-54, T-55, T-56, T-57, T-58, T-63, T-64, T-65, T-59, T-60, T-61, T-62, T-66, T-67 | `tasks/weather-app-tasks.md` | Test |
 
-## Entrega 6 — E2E e hardening
+## Entrega 6 — Testes E2E
 
 | ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | T-18 | Preparar Playwright determinístico | Configurar rotas e ambiente controlado. | Ambos os endpoints interceptados; request não previsto ao provedor falha; relógio/fuso fixos; cenário explícito 360 × 640 além do perfil mobile (spec 4.0, RNF1). | T-03, T-17 | `playwright.config.ts`, `tests/e2e/helpers/routes.ts` | Test |
-| T-19 | Testar fluxo principal E2E | Buscar, selecionar e alternar no navegador. | Homônimas, cidade, clima, cinco dias e unidade corretos; contar requests antes/depois do toggle; reload reinicia Celsius (AC-1.1–1.3, AC-2.1, AC-3.1–3.4, AC-4.1–4.5, AC-4.7). | T-18 | `tests/e2e/weather.spec.ts` | Test |
+| T-19 | Testar fluxo principal E2E | Buscar, selecionar e alternar no navegador. | Homônimas, cidade, clima, cinco dias e unidade corretos; contar requests antes/depois do toggle; reload reinicia Celsius (AC-1.1–1.3, AC-2.1, AC-3.1–3.4, AC-4.1–4.5, AC-4.7). | T-18, T-68 | `tests/e2e/weather.spec.ts` | Test |
 | T-20 | Testar erros e recuperação E2E | Exercitar falhas e parciais no navegador. | Vazio, rede, HTTP, JSON, timeout e 429 distintos; retry recupera consulta correta sem fila/automação; parcial preserva dados e crédito (AC-5.1–5.16, AC-6.1–6.2). | T-18 | `tests/e2e/errors.spec.ts` | Test |
 | T-47 | Testar concorrência E2E | Resolver respostas em ordens controladas. | Busca/cidade antiga nunca substitui a atual; campo limpo não repopula; toggle durante loading usa unidade atual (AC-1.5, AC-1.11–1.12, AC-4.8). | T-18 | `tests/e2e/concurrency.spec.ts` | Test |
 | T-21 | Medir layout e toque | Verificar dimensões no navegador. | Larguras 360/768/1280/1920 sem overflow; 360 × 640 alcança cinco dias verticalmente; 1280 × 800 mostra cinco dias juntos; controles ≥ 44 × 44 px conforme exceção (RNF1; AC-3.5, AC-8.1–8.3). | T-18 | `tests/e2e/responsive.spec.ts` | Test |
 | T-48 | Adicionar integração axe | Instalar só o necessário à auditoria automatizada. | Dependência compatível com Playwright declarada e lockfile atualizado, sem runtime SDK de telemetria (RNF2). | T-01 | `package.json`, `pnpm-lock.yaml` | Infra |
 | T-22 | Testar acessibilidade automatizada | Exercitar axe, foco e nomes no navegador. | Zero violações críticas/sérias; setas/Enter/Esc e Tab conforme spec; texto ≥ 4,5:1 e texto grande/ícones/bordas ≥ 3:1 com evidência complementar onde axe não medir (RNF2; AC-4.4, AC-5.8, AC-7.1–7.5). | T-18, T-48 | `tests/e2e/accessibility.spec.ts` | Test |
+| T-27 | Verificar privacidade e idioma | Inspecionar cliente sem instrumentação de produção. | Sem storage de dados, analytics ou destinos extras; recursos locais; reload limpa estado; strings da aplicação pt-BR, nomes próprios conforme provedor; rede/armazenamento verificados (RNF7, RNF9). | T-18 | `tests/e2e/privacy.spec.ts` | Test |
+
+## Entrega 7 — Hardening, operação e liberação
+
+| ID | Título | Descrição curta | Critérios de aceite | Dependências | Arquivos prováveis | Tipo |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| T-29 | Configurar entrega estática | Preparar build e caminho da hospedagem aprovada sem backend. | Base/caminho da hospedagem documentados; `pnpm build` passa e preview do artefato carrega assets no caminho previsto; publicação efetiva e smoke ficam em T-49 (RNF8; OQ-12 aprovada). | T-17, T-35 | `vite.config.ts`, `README.md` | Infra |
+| T-49 | Configurar CI de validação e entrega | Automatizar checklist e publicar somente após sucesso. | Run registra `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm test:e2e` com sucesso; publicação depende de todos os checks; pnpm/lockfile e browsers Playwright instalados; artefato publicado por HTTPS e smoke da URL registra resultado (stack, RNF6/RNF8). | T-19, T-20, T-47, T-21, T-22, T-27, T-29 | `.github/workflows/weather-app.yml` | Infra |
+| T-50 | Definir operação e disponibilidade | Registrar configuração operacional da hospedagem. | Monitoramento mensal separado do provedor, meta e retenção de logs aprovadas, sem analytics client-side; evidência de configuração e smoke registrada (RNF7–RNF8). | T-49, T-35 | `plans/weather-app-plan.md` | Infra |
 | T-23 | Verificar leitor de tela e zoom | Executar protocolo manual de acessibilidade. | Registrar browser/versão/leitor e resultados por estado; zoom real 200% em viewport 1280 px mantém operação sem scroll horizontal; não substituir por CSS zoom/emulação (RNF2; AC-5.8, AC-7.2–7.3, AC-8.4). | T-21, T-22 | `tests/manual/accessibility.md` | Test |
 | T-24 | Verificar contrato real sem acento | Executar teste explícito separado. | Busca real "sao paulo" em português contém cidade esperada; fora da suíte unit/E2E padrão; falha não é mascarada nem expectativa relaxada (AC-1.10). | T-07 | `tests/contract/geocoding.contract.test.ts`, `vitest.contract.config.ts` | Test |
-| T-25 | Medir performance | Executar protocolo aprovado em rede 4G simulada. | Registrar ambiente e 30 execuções válidas; loading ≤ 100 ms, p75 busca ≤ 2 s após envio, previsão ≤ 3 s após seleção conforme spec aprovada; não medir latência fixa de fixture como desempenho real (RNF5). | T-20 | `tests/manual/performance.md` | Test |
-| T-26 | Executar matriz de browsers | Verificar plataformas reais aprovadas. | Duas versões estáveis mais recentes de Chrome/Firefox/Safari/Edge, Safari iOS e Chrome Android com resultado por fluxo; perfil emulado não comprova browser real (RNF6). | T-19, T-20, T-21, T-22 | `tests/manual/compatibility.md` | Test |
-| T-27 | Verificar privacidade e idioma | Inspecionar cliente sem instrumentação de produção. | Sem storage de dados, analytics ou destinos extras; recursos locais; reload limpa estado; strings da aplicação pt-BR, nomes próprios conforme provedor; rede/armazenamento verificados (RNF7, RNF9). | T-18 | `tests/e2e/privacy.spec.ts` | Test |
+| T-25 | Medir performance | Executar protocolo aprovado em rede 4G simulada. | Registrar ambiente e 30 execuções válidas no build publicado; loading ≤ 100 ms, p75 busca ≤ 2 s após envio, previsão ≤ 3 s após seleção conforme spec aprovada; não medir latência fixa de fixture como desempenho real (RNF5). | T-49 | `tests/manual/performance.md` | Test |
+| T-26 | Executar matriz de browsers | Verificar plataformas reais aprovadas. | Duas versões estáveis mais recentes de Chrome/Firefox/Safari/Edge, Safari iOS e Chrome Android com resultado por fluxo no build publicado; perfil emulado não comprova browser real (RNF6). | T-49 | `tests/manual/compatibility.md` | Test |
 | T-28 | Validar usabilidade | Executar sessão moderada com personas. | Cinco participantes P1–P3, pelo menos quatro concluem sem ajuda; resultados anonimizados registrados, sem dados pessoais no Git (RNF4). | T-19, T-21, T-23 | `tests/manual/usability.md` | Test |
-| T-29 | Configurar entrega estática | Preparar hospedagem aprovada sem backend. | Site servido por HTTPS no caminho/base corretos; build de produção carregável; implantação smoke registrada (RNF8; OQ-12 aprovada). | T-17, T-35 | `vite.config.ts`, `README.md` | Infra |
-| T-49 | Configurar CI de validação e entrega | Automatizar checklist e publicar somente após sucesso. | Run registra `pnpm lint`, `pnpm build`, `pnpm test`, `pnpm test:e2e` com sucesso; job de publicação depende explicitamente de todos os checks; pnpm/lockfile e browsers Playwright instalados pelo workflow, sem gerenciador alternativo (stack do projeto, RNF6/RNF8). | T-19, T-20, T-29 | `.github/workflows/weather-app.yml` | Infra |
-| T-50 | Definir operação e disponibilidade | Registrar configuração operacional da hospedagem. | Monitoramento mensal separado do provedor, meta e retenção de logs aprovadas, sem analytics client-side; evidência de configuração e smoke registrada (RNF7–RNF8). | T-29, T-35 | `plans/weather-app-plan.md` | Infra |
-| T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
+| T-30 | Consolidar evidências e liberar | Conferir rastreabilidade e gate final. | Todos os ACs têm teste/protocolo e resultado; checklist final passa no mesmo estado/artefato avaliado; contrato, zoom, performance, compatibilidade, privacidade e aceite humano incluídos; nenhuma falha impeditiva/OQ bloqueante; release aprovado, não presumido. | T-68, T-23, T-24, T-25, T-26, T-27, T-28, T-49, T-50 | `tasks/weather-app-tasks.md`, `tests/manual/release.md` | Test |
 
 ## Desdobramento da revisão de granularidade — P5.2
 
@@ -148,3 +155,14 @@ Não estabelecer percentual de cobertura arbitrário: o portão é a evidência 
 | T-29: hospedagem, CI e operação | T-29 entrega estática; T-49 workflow; T-50 monitoramento/logs. |
 
 Tarefas Test não incluem corrigir genericamente todos os componentes/serviços: um defeito encontrado bloqueia o aceite e deve gerar correção pequena no alvo responsável, com novo T-NN e dependência registrada. Arquivos de relatório/manual só serão criados na execução das tarefas correspondentes, não nesta fase documental.
+
+## Dependências e ordem — P5.4
+
+- T-31/T-32/T-33/T-35 podem ser discutidas em paralelo, mas todas editam a spec e precisam de integração coordenada; T-34 depende dos contratos e escopo, T-36 consolida e T-01 autoriza código.
+- T-02 precede funções, dados e UI. Cada teste depende de seu alvo e das fixtures T-03; tipos compartilhados não dependem de React, serviços ou testes.
+- T-07 → T-08 → T-09 evita edições concorrentes no serviço; T-10 → T-11 → T-12 → T-39 faz o mesmo no hook. Isso representa construção incremental no mesmo arquivo, não acoplamento de uma API à outra.
+- T-13 precede T-44, que monta `App`; T-17 só liga a UI depois do hook e de todos os componentes necessários.
+- T-68 exige as 19 tarefas unitárias/de integração; o aceite do fluxo principal E2E T-19 depende desse gate. Preparação de rotas e testes especializados podem avançar independentemente enquanto não houver dependência real.
+- T-29 prepara o artefato/base; T-49 publica e verifica o smoke; T-50 registra operação. Performance e compatibilidade finais avaliam esse build publicado, não apenas o servidor Vite.
+- Publicação em T-49 não equivale a liberação: T-30 é o aceite final, após evidências manuais, contrato e metas. Se o hardening alterar o build, reexecutar checks e evidências afetadas no novo artefato antes do aceite.
+- Toda dependência aparece antes da tarefa consumidora nesta lista. IDs não foram renumerados; não inserir dependências artificiais apenas para fazer o número crescer.
