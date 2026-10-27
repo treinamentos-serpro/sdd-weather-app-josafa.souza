@@ -28,6 +28,20 @@ OQ-16 continua pendente de aprovação formal dessa política para a aplicação
 
 ## ForecastList e ForecastCard
 
+## Estados de apresentação
+
+`LoadingState` anuncia via `role="status"` e aceita `message` opcional.
+`ErrorState` recebe mensagem segura para o usuário, `onRetry` e `disabled`
+opcional; anuncia o erro e mantém retry como botão nativo, sem submeter formulários.
+`EmptyState` recebe `title` e `hint`, servindo tanto à orientação inicial quanto
+à busca sem resultados. Estes componentes não fazem requests nem controlam foco.
+
+P6.6–P6.8 foram autorizados como exceção limitada em 27/10/2026, incluindo
+SearchBar manual, bootstrap, demonstração com mock e testes, sem API nem
+aprovação global da spec/T-01.
+
+## Previsão diária
+
 `ForecastList` recebe `days`, `unit` e `today`; `ForecastCard` recebe `day`, `unit`
 e `today`. `today` deve ser YYYY-MM-DD no fuso da cidade; não use a data do
 dispositivo como substituto. Exemplo para a fixture fixa:
